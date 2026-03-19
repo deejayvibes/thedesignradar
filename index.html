@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>The Design Radar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0b0c10;
+      --surface: #13151c;
+      --border: #1e2130;
+      --accent: #7fffb2;
+      --accent2: #4fc3f7;
+      --accent3: #ff6b9d;
+      --text: #e8eaf2;
+      --muted: #555b7a;
+      --font-display: 'Syne', sans-serif;
+      --font-title: 'Cormorant Garamond', serif;
+      --font-mono: 'DM Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative;
+      z-index: 1;
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .title {
+      font-family: var(--font-title);
+      font-weight: 300;
+      font-size: 1rem;
+      letter-spacing: 0.12em;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+
+    .title em {
+      font-style: normal;
+      color: var(--text);
+    }
+
+    .btn-download-sm {
+      padding: 0.35rem 0.85rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .btn-download-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── LAYOUT ── */
+    main {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      min-height: 0;
+    }
+
+    /* ── LEFT PANEL ── */
+    .panel {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+    }
+
+    .panel-title {
+      font-size: 0.6rem;
+      font-family: var(--font-mono);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-top: 60px;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── MEMBER TABS ── */
+    .member-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+    }
+
+    .member-tab {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.3rem 0.6rem 0.3rem 0.5rem;
+      border-radius: 100px;
+      border: 1.5px solid transparent;
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.18s;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      font-family: var(--font-display);
+    }
+    .member-tab:hover { color: var(--text); border-color: var(--border); }
+    .member-tab.active { color: var(--text); background: var(--surface); }
+
+    .member-tab .tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    .member-tab .tab-name {
+      outline: none; border: none; background: transparent;
+      color: inherit; font: inherit; width: 62px; cursor: pointer;
+    }
+    .member-tab.active .tab-name { cursor: text; }
+
+    .member-tab .tab-remove {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 0.75rem; line-height: 1;
+      padding: 0; opacity: 0; transition: opacity 0.15s;
+    }
+    .member-tab:hover .tab-remove,
+    .member-tab.active .tab-remove { opacity: 1; }
+
+    .add-member-btn {
+      padding: 0.3rem 0.55rem;
+      border-radius: 100px;
+      border: 1.5px dashed var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.18s;
+      line-height: 1;
+    }
+    .add-member-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── METRIC ROWS ── */
+    .metric-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      padding: 0.5rem 0;
+      animation: slideIn 0.4s ease both;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .metric-header { display: flex; justify-content: space-between; align-items: center; }
+    .metric-label  { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 600; }
+    .dot           { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .metric-value  { font-family: var(--font-mono); font-size: 0.72rem; min-width: 20px; text-align: right; }
+
+    /* ── SLIDER ── */
+    input[type="range"] {
+      width: 100%; -webkit-appearance: none; appearance: none;
+      height: 2px; border-radius: 0; background: var(--border);
+      outline: none; cursor: pointer; display: block; margin: 6px 0 0 0;
+    }
+    input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: var(--border); }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--thumb-color, var(--accent));
+      box-shadow: 0 0 2px var(--thumb-color, var(--accent));
+      transition: background 0.15s, box-shadow 0.15s;
+      margin-top: -8px; cursor: grab;
+    }
+    input[type="range"]:active::-webkit-slider-thumb  { cursor: grabbing; background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); }
+    input[type="range"]::-webkit-slider-thumb:hover   { background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); }
+    input[type="range"]::-moz-range-track { height: 2px; background: var(--border); border: none; }
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%; border: none;
+      background: var(--thumb-color, var(--accent));
+      box-shadow: 0 0 2px var(--thumb-color, var(--accent)); cursor: grab;
+    }
+
+    .panel-footer-link {
+      margin-top: auto;
+      padding-top: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+      display: block;
+    }
+    .panel-footer-link:hover { color: var(--text); }
+
+    /* ── TOAST ── */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      15%      { transform: translateX(-8px); }
+      30%      { transform: translateX(8px); }
+      45%      { transform: translateX(-6px); }
+      60%      { transform: translateX(6px); }
+      75%      { transform: translateX(-3px); }
+      90%      { transform: translateX(3px); }
+    }
+    .toast {
+      margin-bottom: 1rem;
+      background: #1e2130; border: 1px solid #ff6b9d; color: #ff6b9d;
+      font-family: var(--font-mono); font-size: 0.7rem;
+      padding: 0.5rem 1rem; border-radius: 8px; letter-spacing: 0.06em;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+      text-align: center; flex-shrink: 0;
+    }
+    .toast.show { opacity: 1; animation: shake 0.5s ease; }
+
+    /* ── RIGHT PANEL ── */
+    .chart-area {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 3rem; gap: 1.25rem; position: relative;
+    }
+
+    .chart-container { position: relative; width: min(520px, 100%); aspect-ratio: 1; }
+
+    .chart-glow {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(127,255,178,0.06) 0%, transparent 70%);
+      border-radius: 50%; pointer-events: none;
+    }
+
+    canvas#spiderChart { width: 100% !important; height: 100% !important; }
+
+    /* ── LEGEND ── */
+    .chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; }
+    .legend-item  { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-display); font-size: 0.75rem; font-weight: 600; }
+    .legend-swatch { width: 20px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+
+    footer { display: none; }
+
+    @media (max-width: 800px) {
+      main { grid-template-columns: 1fr; }
+      .panel { border-right: none; border-bottom: 1px solid var(--border); }
+      header { padding: 1rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="title">The <em>Design Radar</em></span>
+  <button class="btn-download-sm" onclick="downloadChart()">⬇ PNG</button>
+</header>
+
+<main>
+  <aside class="panel" id="mainPanel">
+    <div class="member-tabs" id="memberTabs"></div>
+    <div class="toast" id="toast"></div>
+    <div class="panel-title" id="panelLabel">// Competency</div>
+    <div id="metricsPanel"></div>
+    <a class="panel-footer-link" href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener">ABOUT</a>
+  </aside>
+
+  <section class="chart-area">
+    <div class="chart-container">
+      <div class="chart-glow"></div>
+      <canvas id="spiderChart"></canvas>
+    </div>
+    <div class="chart-legend" id="chartLegend"></div>
+  </section>
+</main>
+
+<footer></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  const MEMBER_COLOURS = [
+    { border: '#7fffb2', bg: 'rgba(127,255,178,0.10)' },
+    { border: '#4fc3f7', bg: 'rgba(79,195,247,0.10)'  },
+    { border: '#ff6b9d', bg: 'rgba(255,107,157,0.10)' },
+    { border: '#ffd166', bg: 'rgba(255,209,102,0.10)' },
+    { border: '#a78bfa', bg: 'rgba(167,139,250,0.10)' },
+    { border: '#fb923c', bg: 'rgba(251,146,60,0.10)'  },
+  ];
+
+  const AXIS_DOTS  = ['#7fffb2','#4fc3f7','#ff6b9d','#ffd166','#a78bfa','#fb923c','#34d399'];
+  const axisLabels = ['Hunter','Q1','Q4','Farmer','Q3','Q2'];
+  const panelOrder = [0, 3, 1, 5, 4, 2]; // Hunter, Farmer, Q1, Q2, Q3, Q4
+
+  let members      = [{ name: 'Person 1', values: [8, 6, 7, 10, 5, 9] }];
+  let activeMember = 0;
+
+  // ── Chart ──
+  const ctx = document.getElementById('spiderChart').getContext('2d');
+  const spiderChart = new Chart(ctx, {
+    type: 'radar',
+    data: { labels: axisLabels, datasets: [] },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      animation: { duration: 250, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#13151c', borderColor: '#1e2130', borderWidth: 1,
+          titleFont: { family: 'DM Mono', size: 11 },
+          bodyFont:  { family: 'Syne', size: 13, weight: '700' },
+          padding: 12,
+          callbacks: {
+            title: items => members[items[0].datasetIndex]?.name || '',
+            label: item  => `  ${axisLabels[item.dataIndex]}: ${item.raw} / 12`
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 12,
+          ticks: { stepSize: 2, color: '#2e3450', backdropColor: 'transparent', font: { family: 'DM Mono', size: 9 }, showLabelBackdrop: false },
+          grid:        { color: '#1e2130', lineWidth: 1 },
+          angleLines:  { color: '#1a1d2b', lineWidth: 1 },
+          pointLabels: { color: '#8890b0', font: { family: 'Syne', size: 12, weight: '600' } }
+        }
+      }
+    }
+  });
+
+  function updateChart(animate = true) {
+    spiderChart.data.datasets = members.map((mem, i) => {
+      const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+      return {
+        label: mem.name, data: mem.values,
+        backgroundColor: c.bg, borderColor: c.border, borderWidth: 1.5,
+        pointBackgroundColor: c.border, pointBorderColor: '#0b0c10',
+        pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 8,
+      };
+    });
+    spiderChart.options.animation = animate ? { duration: 250, easing: 'easeInOutQuart' } : false;
+    spiderChart.update(animate ? undefined : 'none');
+  }
+
+  // ── Tabs ──
+  function renderTabs() {
+    const tabsEl = document.getElementById('memberTabs');
+    tabsEl.innerHTML = '';
+    members.forEach((mem, i) => {
+      const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+      const tab = document.createElement('div');
+      tab.className = 'member-tab' + (i === activeMember ? ' active' : '');
+      tab.style.borderColor = i === activeMember ? c.border : 'transparent';
+      tab.innerHTML = `
+        <span class="tab-dot" style="background:${c.border}"></span>
+        <input class="tab-name" value="${mem.name}" readonly
+          onclick="if(${i}===activeMember){this.removeAttribute('readonly');this.select()}else{selectMember(${i})}"
+          onblur="members[${i}].name=this.value;this.setAttribute('readonly','');renderTabs();updateChart();renderLegend()"
+          onkeydown="if(event.key==='Enter'){this.blur()}"
+          title="Click to rename"
+        />
+        ${members.length > 1 ? `<button class="tab-remove" onclick="removeMember(${i},event)">×</button>` : ''}
+      `;
+      tabsEl.appendChild(tab);
+    });
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-member-btn';
+    addBtn.textContent = '+';
+    addBtn.title = 'Add team member';
+    addBtn.onclick = addMember;
+    tabsEl.appendChild(addBtn);
+  }
+
+  // ── Sliders ──
+  function renderPanel() {
+    const panel = document.getElementById('metricsPanel');
+    const mem   = members[activeMember];
+    const c     = MEMBER_COLOURS[activeMember % MEMBER_COLOURS.length];
+    document.getElementById('panelLabel').style.color = c.border;
+    panel.innerHTML = '';
+    panelOrder.forEach((ai, pi) => {
+      const label = axisLabels[ai];
+      const val   = mem.values[ai];
+      const row   = document.createElement('div');
+      row.className = 'metric-row';
+      row.style.animationDelay = `${pi * 0.04}s`;
+      row.innerHTML = `
+        <div class="metric-header">
+          <div class="metric-label">
+            <span class="dot" style="background:${AXIS_DOTS[ai % AXIS_DOTS.length]}"></span>
+            <span style="font-size:0.78rem;font-weight:600">${label}</span>
+          </div>
+          <span class="metric-value" id="val-${ai}" style="color:${c.border}">${val}</span>
+        </div>
+        <input type="range" min="0" max="12" step="1" value="${val}"
+          data-ai="${ai}" style="accent-color:${c.border};--thumb-color:${c.border}"
+          oninput="members[${activeMember}].values[${ai}]=+this.value;document.getElementById('val-${ai}').textContent=this.value;updateChart(false)"/>
+        <div style="position:relative;width:100%;height:13px;margin-top:1px">
+          ${[0,2,4,6,8,10,12].map(n => {
+            const pct = (n/12)*100;
+            const off = `calc(${pct}% + ${8 - pct*0.16}px)`;
+            return `<span style="position:absolute;left:${off};transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.5rem;color:#555b7a;pointer-events:none">${n}</span>`;
+          }).join('')}
+        </div>
+      `;
+      panel.appendChild(row);
+    });
+  }
+
+  // ── Legend ──
+  function renderLegend() {
+    document.getElementById('chartLegend').innerHTML = members.map((mem, i) => {
+      const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+      return `<div class="legend-item">
+        <span class="legend-swatch" style="background:${c.border}"></span>
+        <span style="color:${c.border}">${mem.name}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function selectMember(i) {
+    activeMember = i;
+    renderTabs(); renderPanel(); updateChart(); renderLegend();
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.remove('show');
+    void t.offsetWidth;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  function addMember() {
+    if (members.length >= 6) { showToast('Maximum 6 members allowed'); return; }
+    members.push({ name: `Person ${members.length + 1}`, values: [6,6,6,6,6,6] });
+    selectMember(members.length - 1);
+  }
+
+  function removeMember(i, e) {
+    e.stopPropagation();
+    if (members.length <= 1) return;
+    members.splice(i, 1);
+    activeMember = Math.min(activeMember, members.length - 1);
+    renderTabs(); renderPanel(); updateChart(); renderLegend();
+  }
+
+  // ── Drag on chart ──
+  (function setupChartDrag() {
+    const canvas = document.getElementById('spiderChart');
+    let draggingIdx = null;
+    function center() {
+      const a = spiderChart.chartArea;
+      return { x:(a.left+a.right)/2, y:(a.top+a.bottom)/2, r:Math.min(a.right-a.left,a.bottom-a.top)/2 };
+    }
+    function angle(i,total){ return (2*Math.PI*i/total)-Math.PI/2; }
+    function getPos(e){
+      const rect=canvas.getBoundingClientRect(), src=e.touches?e.touches[0]:e;
+      return { x:(src.clientX-rect.left)*(canvas.width/rect.width), y:(src.clientY-rect.top)*(canvas.height/rect.height) };
+    }
+    function findPoint(px,py){
+      const {x:cx,y:cy,r:cr}=center(), n=axisLabels.length;
+      let best=-1, bestD=35;
+      members[activeMember].values.forEach((v,i)=>{
+        const a=angle(i,n), ratio=v/12;
+        const d=Math.hypot(px-(cx+Math.cos(a)*cr*ratio), py-(cy+Math.sin(a)*cr*ratio));
+        if(d<bestD){bestD=d;best=i;}
+      });
+      return best;
+    }
+    function onDown(e){ const {x,y}=getPos(e); draggingIdx=findPoint(x,y); if(draggingIdx!==-1)e.preventDefault(); }
+    function onMove(e){
+      if(draggingIdx===null||draggingIdx===-1)return; e.preventDefault();
+      const {x:px,y:py}=getPos(e),{x:cx,y:cy,r:cr}=center(),n=axisLabels.length;
+      const a=angle(draggingIdx,n),dx=Math.cos(a),dy=Math.sin(a);
+      const val=Math.round(Math.max(0,Math.min(12,((px-cx)*dx+(py-cy)*dy)/cr*12)));
+      members[activeMember].values[draggingIdx]=val;
+      const sl=document.querySelector(`input[data-ai="${draggingIdx}"]`);
+      const vl=document.getElementById(`val-${draggingIdx}`);
+      if(sl)sl.value=val; if(vl)vl.textContent=val;
+      updateChart(false);
+    }
+    function onUp(){ draggingIdx=null; }
+    canvas.addEventListener('mousedown',onDown);
+    canvas.addEventListener('mousemove',onMove);
+    canvas.addEventListener('mouseup',onUp);
+    canvas.addEventListener('touchstart',onDown,{passive:false});
+    canvas.addEventListener('touchmove',onMove,{passive:false});
+    canvas.addEventListener('touchend',onUp);
+  })();
+
+  // ── Download PNG ──
+  function downloadChart() {
+    const PAD=48, chartCanvas=document.getElementById('spiderChart'), dpr=window.devicePixelRatio||1;
+    const legendItems=members.map((mem,i)=>({name:mem.name,color:MEMBER_COLOURS[i%MEMBER_COLOURS.length].border}));
+    const swatchW=20,swatchH=3,gap=8,itemGap=24,fontSize=13;
+    const tmp=document.createElement('canvas').getContext('2d');
+    tmp.font=`600 ${fontSize}px Syne, sans-serif`;
+    const itemWidths=legendItems.map(it=>swatchW+gap+tmp.measureText(it.name).width);
+    const totalLegendW=itemWidths.reduce((a,b)=>a+b,0)+(legendItems.length-1)*itemGap;
+    const chartW=chartCanvas.width/dpr, chartH=chartCanvas.height/dpr;
+    const totalW=chartW+PAD*2, totalH=chartH+PAD*2+24+16;
+    const off=document.createElement('canvas');
+    off.width=totalW*dpr; off.height=totalH*dpr;
+    const octx=off.getContext('2d');
+    octx.scale(dpr,dpr);
+    octx.fillStyle='#0b0c10'; octx.fillRect(0,0,totalW,totalH);
+    octx.drawImage(chartCanvas,PAD,PAD,chartW,chartH);
+    const legendY=PAD+chartH+16; let legendX=(totalW-totalLegendW)/2;
+    legendItems.forEach((it,i)=>{
+      octx.fillStyle=it.color;
+      octx.beginPath(); octx.roundRect(legendX,legendY+(fontSize-swatchH)/2,swatchW,swatchH,2); octx.fill();
+      octx.font=`600 ${fontSize}px Syne, sans-serif`; octx.textBaseline='middle';
+      octx.fillText(it.name,legendX+swatchW+gap,legendY+fontSize/2);
+      legendX+=itemWidths[i]+itemGap;
+    });
+    const link=document.createElement('a');
+    link.download='team-competence-chart.png'; link.href=off.toDataURL('image/png');
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  }
+
+  // ── Init ──
+  renderTabs(); renderPanel(); updateChart(); renderLegend();
+</script>
+</body>
+</html>
