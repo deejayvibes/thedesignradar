@@ -177,6 +177,10 @@
       animation: slideIn 0.4s ease both;
     }
 
+    .metric-row:first-child {
+      margin-top: 1.5rem;
+    }
+
     @keyframes slideIn {
       from { opacity: 0; transform: translateX(-12px); }
       to   { opacity: 1; transform: translateX(0); }
@@ -211,9 +215,15 @@
       box-shadow: 0 0 2px var(--thumb-color, var(--accent)); cursor: grab;
     }
 
-    .panel-footer-link {
+    .panel-footer {
       margin-top: auto;
       padding-top: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-footer-link {
       font-family: var(--font-mono);
       font-size: 0.6rem;
       letter-spacing: 0.15em;
@@ -221,7 +231,6 @@
       text-decoration: none;
       text-transform: uppercase;
       transition: color 0.2s;
-      display: block;
     }
     .panel-footer-link:hover { color: var(--text); }
 
@@ -250,6 +259,7 @@
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       padding: 2rem 3rem; gap: 1.25rem; position: relative;
+      overflow: hidden;
     }
 
     .chart-container { position: relative; width: min(520px, 100%); aspect-ratio: 1; }
@@ -269,6 +279,25 @@
     .legend-item  { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-display); font-size: 0.75rem; font-weight: 600; }
     .legend-swatch { width: 20px; height: 3px; border-radius: 2px; flex-shrink: 0; }
 
+    /* ── SPACE LABELS ── */
+    .space-label {
+      position: absolute;
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.12);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .top-left    { top: 1.25rem; left: 1.5rem; }
+    .top-right   { top: 1.25rem; right: 1.5rem; }
+    .bottom-centre {
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
     footer { display: none; }
 
     @media (max-width: 800px) {
@@ -282,24 +311,30 @@
 
 <header>
   <span class="title">The <em>Design Radar</em></span>
-  <button class="btn-download-sm" onclick="downloadChart()">⬇ PNG</button>
 </header>
 
 <main>
   <aside class="panel" id="mainPanel">
     <div class="member-tabs" id="memberTabs"></div>
     <div class="toast" id="toast"></div>
-    <div class="panel-title" id="panelLabel">// Competency</div>
+    <div class="panel-title" id="panelLabel">// Core Competencies</div>
     <div id="metricsPanel"></div>
-    <a class="panel-footer-link" href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener">ABOUT</a>
+    <div class="panel-footer">
+      <a class="panel-footer-link" href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener">LEARN</a>
+      <button class="btn-download-sm" onclick="downloadChart()">⬇ PNG</button>
+    </div>
   </aside>
 
   <section class="chart-area">
+    <svg id="axisExtLines" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:0"></svg>
+    <span class="space-label top-left">Solution Space</span>
+    <span class="space-label top-right">Problem Space</span>
     <div class="chart-container">
       <div class="chart-glow"></div>
       <canvas id="spiderChart"></canvas>
     </div>
     <div class="chart-legend" id="chartLegend"></div>
+    <span class="space-label bottom-centre">Execution Space</span>
   </section>
 </main>
 
@@ -368,7 +403,72 @@
     });
     spiderChart.options.animation = animate ? { duration: 250, easing: 'easeInOutQuart' } : false;
     spiderChart.update(animate ? undefined : 'none');
+    drawExtensionLines();
   }
+
+  // ── Extension lines from max points of Hunter(0), Q4(2), Q3(4) to browser edge ──
+  function drawExtensionLines() {
+    const svg    = document.getElementById('axisExtLines');
+    const canvas = document.getElementById('spiderChart');
+    const section = canvas.closest('.chart-area');
+    if (!spiderChart.chartArea) return;
+
+    const scale  = spiderChart.scales.r;
+    const total  = axisLabels.length;
+    const maxR   = scale.drawingArea;
+    const cxChart = scale.xCenter;
+    const cyChart = scale.yCenter;
+
+    // Canvas position relative to the section
+    const canvasRect  = canvas.getBoundingClientRect();
+    const sectionRect = section.getBoundingClientRect();
+    const dpr         = window.devicePixelRatio || 1;
+
+    // canvas internal coords → section pixel coords
+    const scaleX = canvasRect.width  / (canvas.width  / dpr);
+    const scaleY = canvasRect.height / (canvas.height / dpr);
+    const offX   = canvasRect.left - sectionRect.left;
+    const offY   = canvasRect.top  - sectionRect.top;
+
+    function toSection(cx, cy) {
+      return {
+        x: offX + cx * scaleX,
+        y: offY + cy * scaleY
+      };
+    }
+
+    // Axes to extend: Hunter=0, Q4=2, Q3=4
+    const extAxes = [0, 2, 4];
+
+    svg.innerHTML = '';
+
+    extAxes.forEach(axisIdx => {
+      const angle  = (2 * Math.PI * axisIdx / total) - Math.PI / 2;
+      const dx     = Math.cos(angle);
+      const dy     = Math.sin(angle);
+
+      // Max point (value=12) in canvas coords
+      const maxPt  = toSection(cxChart + dx * maxR, cyChart + dy * maxR);
+
+      // Extend far enough to always exit the SVG viewport
+      const farDist = Math.max(sectionRect.width, sectionRect.height) * 3;
+      const endX   = maxPt.x + dx * farDist;
+      const endY   = maxPt.y + dy * farDist;
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', maxPt.x);
+      line.setAttribute('y1', maxPt.y);
+      line.setAttribute('x2', endX);
+      line.setAttribute('y2', endY);
+      line.setAttribute('stroke', 'rgba(255,255,255,0.18)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '3 7');
+      line.setAttribute('stroke-linecap', 'round');
+      svg.appendChild(line);
+    });
+  }
+
+  window.addEventListener('resize', drawExtensionLines);
 
   // ── Tabs ──
   function renderTabs() {
@@ -463,7 +563,7 @@
   }
 
   function addMember() {
-    if (members.length >= 6) { showToast('Maximum 6 members allowed'); return; }
+    if (members.length >= 6) { showToast('Maximum limit reached'); return; }
     members.push({ name: `Person ${members.length + 1}`, values: [6,6,6,6,6,6] });
     selectMember(members.length - 1);
   }
@@ -552,6 +652,7 @@
 
   // ── Init ──
   renderTabs(); renderPanel(); updateChart(); renderLegend();
+  setTimeout(drawExtensionLines, 300);
 </script>
 </body>
 </html>
