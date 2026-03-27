@@ -67,6 +67,48 @@
       color: var(--text);
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .notif-bell {
+      position: relative;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .notif-bell:hover {
+      color: var(--text);
+      background: var(--border);
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ff6b9d;
+      border: 1.5px solid var(--bg);
+      box-shadow: 0 0 6px rgba(255, 107, 157, 0.8);
+      animation: notif-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes notif-pulse {
+      0%, 100% { transform: scale(1);   opacity: 1; }
+      50%       { transform: scale(1.3); opacity: 0.7; }
+    }
+
     .btn-download-sm {
       padding: 0.35rem 0.85rem;
       background: transparent;
@@ -80,6 +122,154 @@
       letter-spacing: 0.05em;
     }
     .btn-download-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── NOTIFICATION DRAWER ── */
+    .notif-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+    }
+    .notif-overlay.open { pointer-events: all; }
+
+    .notif-drawer {
+      position: fixed;
+      top: 0; right: 0;
+      width: 360px;
+      height: 100vh;
+      background: #0f1117;
+      border-left: 1px solid var(--border);
+      z-index: 101;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+    }
+    .notif-drawer.open { transform: translateX(0); }
+
+    .notif-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      z-index: 100;
+      transition: background 0.32s;
+      pointer-events: none;
+    }
+    .notif-backdrop.open {
+      background: rgba(0,0,0,0.45);
+      pointer-events: all;
+    }
+
+    .notif-header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .notif-header-title {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .notif-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .notif-close:hover { color: var(--text); }
+
+    .notif-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem 0;
+      overflow-y: auto;
+    }
+
+    .accordion-item {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .accordion-trigger {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      gap: 1rem;
+      transition: background 0.15s;
+    }
+    .accordion-trigger:hover { background: rgba(255,255,255,0.03); }
+
+    .accordion-heading {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-align: left;
+      letter-spacing: 0.01em;
+    }
+
+    .accordion-chevron {
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: transform 0.25s ease;
+    }
+    .accordion-item.open .accordion-chevron { transform: rotate(180deg); }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+    .accordion-item.open .accordion-body {
+      max-height: 400px;
+    }
+
+    .accordion-content {
+      padding: 0.25rem 1.5rem 1.25rem;
+    }
+
+    .accordion-text {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      color: #b0b8d0;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .accordion-bullet {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.3rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: #b0b8d0;
+      letter-spacing: 0.04em;
+    }
+
+    .accordion-bullet-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
 
     /* ── LAYOUT ── */
     main {
@@ -107,7 +297,6 @@
       font-family: var(--font-mono);
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      margin-top: 60px;
       margin-bottom: 0.5rem;
     }
 
@@ -310,18 +499,25 @@
 <body>
 
 <header>
-  <span class="title">The <em>Design Radar</em></span>
+  <span class="title">The <em>Team Radar</em></span>
+  <div class="header-actions">
+    <div class="notif-bell" title="Notifications" onclick="openDrawer()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6"/>
+        <path d="M10 21h4"/>
+        <path d="M12 2a7 7 0 0 1 5 11.9c-.6.7-1 1.4-1 2.1v.5a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5V16c0-.7-.4-1.4-1-2.1A7 7 0 0 1 12 2z"/>
+      </svg>
+    </div>
+  </div>
 </header>
 
 <main>
   <aside class="panel" id="mainPanel">
     <div class="member-tabs" id="memberTabs"></div>
     <div class="toast" id="toast"></div>
-    <div class="panel-title" id="panelLabel">// Core Competencies</div>
     <div id="metricsPanel"></div>
     <div class="panel-footer">
-      <a class="panel-footer-link" href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener">LEARN</a>
-      <button class="btn-download-sm" onclick="downloadChart()">⬇ PNG</button>
+      <button class="btn-download-sm" onclick="downloadChart()">⬇ Download Graph</button>
     </div>
   </aside>
 
@@ -355,7 +551,7 @@
   const axisLabels = ['Hunter','Q1','Q4','Farmer','Q3','Q2'];
   const panelOrder = [0, 3, 1, 5, 4, 2]; // Hunter, Farmer, Q1, Q2, Q3, Q4
 
-  let members      = [{ name: 'Person 1', values: [8, 6, 7, 10, 5, 9] }];
+  let members      = [{ name: 'Member 1', values: [6, 6, 6, 6, 6, 6] }];
   let activeMember = 0;
 
   // ── Chart ──
@@ -504,9 +700,24 @@
     const panel = document.getElementById('metricsPanel');
     const mem   = members[activeMember];
     const c     = MEMBER_COLOURS[activeMember % MEMBER_COLOURS.length];
-    document.getElementById('panelLabel').style.color = c.border;
     panel.innerHTML = '';
+
+    // panelOrder: Hunter(0), Farmer(3), Q1(1), Q2(5), Q3(4), Q4(2)
+    // Insert '// Mindsets' before Hunter (index 0 in panelOrder)
+    // Insert '// Core Competencies' before Q1 (index 2 in panelOrder)
+    const sectionBreaks = { 0: '// Mindsets', 2: '// Core Competencies' };
+
     panelOrder.forEach((ai, pi) => {
+      // Inject section title if needed
+      if (sectionBreaks[pi] !== undefined) {
+        const title = document.createElement('div');
+        title.className = 'panel-title';
+        title.style.color = c.border;
+        title.style.marginTop = pi === 0 ? '0' : '1rem';
+        title.textContent = sectionBreaks[pi];
+        panel.appendChild(title);
+      }
+
       const label = axisLabels[ai];
       const val   = mem.values[ai];
       const row   = document.createElement('div');
@@ -518,20 +729,49 @@
             <span class="dot" style="background:${AXIS_DOTS[ai % AXIS_DOTS.length]}"></span>
             <span style="font-size:0.78rem;font-weight:600">${label}</span>
           </div>
-          <span class="metric-value" id="val-${ai}" style="color:${c.border}">${val}</span>
         </div>
-        <input type="range" min="0" max="12" step="1" value="${val}"
-          data-ai="${ai}" style="accent-color:${c.border};--thumb-color:${c.border}"
-          oninput="members[${activeMember}].values[${ai}]=+this.value;document.getElementById('val-${ai}').textContent=this.value;updateChart(false)"/>
+        <div style="position:relative;width:100%;margin-top:6px">
+          <input type="range" min="0" max="12" step="1" value="${val}"
+            id="range-${ai}"
+            data-ai="${ai}" style="accent-color:${c.border};--thumb-color:${c.border};width:100%;margin:0"
+            oninput="members[${activeMember}].values[${ai}]=+this.value;updateThumbLabel(${ai},+this.value);updateChart(false)"/>
+          <span id="val-${ai}" style="
+            position:absolute;
+            top:-18px;
+            left:calc(${(val/12)*100}% + ${9 - (val/12)*18}px);
+            transform:translateX(-50%);
+            font-family:'DM Mono',monospace;
+            font-size:0.5rem;
+            font-weight:500;
+            color:${c.border};
+            pointer-events:none;
+            transition:left 0.05s linear;
+            white-space:nowrap;
+          ">${val}</span>
+        </div>
         <div style="position:relative;width:100%;height:13px;margin-top:1px">
           ${[0,2,4,6,8,10,12].map(n => {
             const pct = (n/12)*100;
             const off = `calc(${pct}% + ${8 - pct*0.16}px)`;
-            return `<span style="position:absolute;left:${off};transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.5rem;color:#555b7a;pointer-events:none">${n}</span>`;
+            return `<span id="tick-${ai}-${n}" style="position:absolute;left:${off};transform:translateX(-50%);font-family:'DM Mono',monospace;font-size:0.5rem;color:#555b7a;pointer-events:none;${val===n?'opacity:0':''}">${n}</span>`;
           }).join('')}
         </div>
       `;
       panel.appendChild(row);
+    });
+  }
+
+  function updateThumbLabel(ai, val) {
+    const label = document.getElementById(`val-${ai}`);
+    if (!label) return;
+    const pct = val / 12;
+    const offset = 9 - pct * 18;
+    label.style.left = `calc(${pct * 100}% + ${offset}px)`;
+    label.textContent = val;
+    // Show/hide scale ticks — hide only the one matching current value
+    [0,2,4,6,8,10,12].forEach(n => {
+      const tick = document.getElementById(`tick-${ai}-${n}`);
+      if (tick) tick.style.opacity = (n === val) ? '0' : '1';
     });
   }
 
@@ -564,7 +804,7 @@
 
   function addMember() {
     if (members.length >= 6) { showToast('Maximum limit reached'); return; }
-    members.push({ name: `Person ${members.length + 1}`, values: [6,6,6,6,6,6] });
+    members.push({ name: `Member ${members.length + 1}`, values: [6,6,6,6,6,6] });
     selectMember(members.length - 1);
   }
 
@@ -608,7 +848,7 @@
       members[activeMember].values[draggingIdx]=val;
       const sl=document.querySelector(`input[data-ai="${draggingIdx}"]`);
       const vl=document.getElementById(`val-${draggingIdx}`);
-      if(sl)sl.value=val; if(vl)vl.textContent=val;
+      if(sl)sl.value=val; if(vl)vl.textContent=val; updateThumbLabel(draggingIdx,val);
       updateChart(false);
     }
     function onUp(){ draggingIdx=null; }
@@ -653,6 +893,93 @@
   // ── Init ──
   renderTabs(); renderPanel(); updateChart(); renderLegend();
   setTimeout(drawExtensionLines, 300);
+
+  // ── Notification Drawer ──
+  const notifications = [
+    {
+      heading: 'There is no perfect hexagon',
+      body: 'Stop hunting for "perfect hexagon" in one person. The idea is to identify your teammate\'s peak quality. Build a team where strengths offset gaps.'
+    },
+    {
+      heading: 'Score by Seniority',
+      bullets: ['Level 1 — Up to 4', 'Level 2 — Up to 8', 'Level 3 — Up to 12']
+    },
+    {
+      heading: 'Name your teammate',
+      body: 'Double-click any "Member" tag to rename it.'
+    },
+    {
+      heading: 'Is it relevant in the AI Era?',
+      body: 'As we surpass general intelligence, hard skills are becoming mere markdown files. In this era, AI is the force multiplier, but human competency is the core. True strength lies in constant reskilling to navigate the new world.'
+    },
+  ];
+
+  function buildAccordion() {
+    const body = document.getElementById('accordionBody');
+    body.innerHTML = '';
+    notifications.forEach((n, i) => {
+      const item = document.createElement('div');
+      item.className = 'accordion-item';
+
+      const contentHtml = n.bullets
+        ? n.bullets.map(b => `<div class="accordion-bullet"><span class="accordion-bullet-dot"></span>${b}</div>`).join('')
+        : `<p class="accordion-text">${n.body}</p>`;
+
+      item.innerHTML = `
+        <button class="accordion-trigger" onclick="toggleAccordion(${i})">
+          <span class="accordion-heading">${n.heading}</span>
+          <svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="accordion-body">
+          <div class="accordion-content">${contentHtml}</div>
+        </div>
+      `;
+      body.appendChild(item);
+    });
+  }
+
+  function toggleAccordion(i) {
+    const items = document.querySelectorAll('.accordion-item');
+    items.forEach((item, idx) => {
+      if (idx === i) {
+        item.classList.toggle('open');
+      } else {
+        item.classList.remove('open');
+      }
+    });
+  }
+
+  function openDrawer() {
+    document.getElementById('notifDrawer').classList.add('open');
+    document.getElementById('notifBackdrop').classList.add('open');
+    buildAccordion();
+  }
+
+  function closeDrawer() {
+    document.getElementById('notifDrawer').classList.remove('open');
+    document.getElementById('notifBackdrop').classList.remove('open');
+  }
 </script>
+
+<!-- Notification Drawer -->
+<div class="notif-backdrop" id="notifBackdrop" onclick="closeDrawer()"></div>
+<div class="notif-drawer" id="notifDrawer">
+  <div class="notif-header">
+    <div style="display:flex;align-items:center;gap:0.6rem">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);flex-shrink:0">
+        <path d="M9 18h6"/>
+        <path d="M10 21h4"/>
+        <path d="M12 2a7 7 0 0 1 5 11.9c-.6.7-1 1.4-1 2.1v.5a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5V16c0-.7-.4-1.4-1-2.1A7 7 0 0 1 12 2z"/>
+      </svg>
+      <span class="notif-header-title">Tips for you</span>
+    </div>
+    <button class="notif-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="notif-body" id="accordionBody"></div>
+  <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);flex-shrink:0;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-family:var(--font-mono);font-size:0.55rem;color:var(--border);letter-spacing:0.12em;text-transform:uppercase">Built by Dhaneesh Jameson</span>
+    <a href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener" style="font-family:var(--font-mono);font-size:0.6rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;text-decoration:none;transition:color 0.2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">Learn More</a>
+  </div>
+</div>
 </body>
 </html>
