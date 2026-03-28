@@ -1073,6 +1073,10 @@
   // ── Notification Drawer ──
   const notifications = [
     {
+      heading: 'About',
+      body: 'The-Deejay-Graph helps you map a product team\'s collective strengths across four core competencies and two distinct mindsets, based on a framework developed by Dhaneesh Jameson. The members need not be limited to designers.'
+    },
+    {
       heading: 'How to plot the graph',
       body: 'Don\'t look for the \'perfect hexagon\' in an individual. Map your teammates\' peaks and valleys to build a squad where strengths cover gaps, the same way you\'d scout a sports team. <a href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">Read more</a>.'
     },
@@ -1086,7 +1090,7 @@
     },
     {
       heading: 'Relevance in the AI era',
-      body: 'Yes! more than ever! With AI commoditising execution, a designer\'s value is increasingly defined by their foundational competencies'
+      body: 'Yes! more than ever!<br>With AI commoditising execution, a designer\'s value is increasingly defined by their foundational competencies.'
     },
   ];
 
@@ -1140,8 +1144,7 @@
 <!-- Notification Drawer -->
 <div class="notif-backdrop" id="notifBackdrop" onclick="closeDrawer()"></div>
 <div class="notif-drawer" id="notifDrawer">
-  <div class="notif-header">
-    <span class="notif-header-title">Tips for you</span>
+  <div class="notif-header" style="justify-content:flex-end">
     <button class="notif-close" onclick="closeDrawer()">×</button>
   </div>
   <div class="notif-body" id="accordionBody"></div>
