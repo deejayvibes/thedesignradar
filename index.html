@@ -60,11 +60,22 @@
       letter-spacing: 0.12em;
       color: var(--text);
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
     .title em {
       font-style: normal;
       color: var(--text);
+    }
+
+    .title-sub {
+      font-family: var(--font-mono);
+      font-size: 0.5rem;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      text-transform: uppercase;
+      font-weight: 400;
+      align-self: flex-end;
     }
 
     .header-actions {
@@ -395,8 +406,8 @@
       transition: background 0.15s, box-shadow 0.15s;
       margin-top: -8px; cursor: grab;
     }
-    input[type="range"]:active::-webkit-slider-thumb  { cursor: grabbing; background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); }
-    input[type="range"]::-webkit-slider-thumb:hover   { background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); }
+    input[type="range"]:active::-webkit-slider-thumb  { cursor: grabbing; background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); transform: scale(1.2); }
+    input[type="range"]::-webkit-slider-thumb:hover   { background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); transform: scale(1.2); }
     input[type="range"]::-moz-range-track { height: 2px; background: var(--border); border: none; }
     input[type="range"]::-moz-range-thumb {
       width: 18px; height: 18px; border-radius: 50%; border: none;
@@ -490,18 +501,73 @@
     footer { display: none; }
 
     @media (max-width: 800px) {
-      main { grid-template-columns: 1fr; }
+      main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+      }
+      .chart-area { order: -1; }
       .panel { border-right: none; border-bottom: 1px solid var(--border); }
       header { padding: 1rem 1.25rem; }
     }
+    /* ── OPAQUE TOGGLE ── */
+    .opaque-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .opaque-toggle-label {
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .opaque-toggle {
+      position: relative;
+      width: 32px;
+      height: 18px;
+      border-radius: 100px;
+      background: var(--border);
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .opaque-toggle.on { background: rgba(127,255,178,0.2); }
+
+    .opaque-toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s, background 0.2s;
+      pointer-events: none;
+    }
+
+    .opaque-toggle.on .opaque-toggle-thumb {
+      transform: translateX(14px);
+      background: var(--accent);
+    }
+
   </style>
 </head>
 <body>
 
 <header>
-  <span class="title">The <em>Team Radar</em></span>
+  <div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+    <span class="title">Deejay <em>Graph</em></span>
+    <span class="title-sub">The Team Radar</span>
+  </div>
   <div class="header-actions">
-    <div class="notif-bell" title="Notifications" onclick="openDrawer()">
+    <button class="btn-download-sm" onclick="downloadChart()">⬇ Download Graph</button>
+    <div class="notif-bell" title="Tips" onclick="openDrawer()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <line x1="3" y1="7" x2="21" y2="7"/>
         <line x1="3" y1="12" x2="21" y2="12"/>
@@ -518,7 +584,6 @@
     <div id="metricsPanel"></div>
     <div class="panel-footer">
       <a href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center;font-family:var(--font-mono);font-size:0.65rem;color:var(--muted);letter-spacing:0.05em;transition:color 0.2s" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">How It Works</a>
-      <button class="btn-download-sm" onclick="downloadChart()">⬇ Download Graph</button>
     </div>
   </aside>
 
@@ -532,6 +597,12 @@
     </div>
     <div class="chart-legend" id="chartLegend"></div>
     <span class="space-label bottom-centre">Execution Space</span>
+    <div style="position:absolute;bottom:1.25rem;right:1.5rem;display:flex;align-items:center;gap:0.4rem;z-index:2">
+      <span class="opaque-toggle-label">Team view</span>
+      <button class="opaque-toggle" id="opaqueToggle" onclick="toggleOpaque()" aria-pressed="false" title="Toggle team view">
+        <span class="opaque-toggle-thumb"></span>
+      </button>
+    </div>
   </section>
 </main>
 
@@ -588,14 +659,32 @@
     }
   });
 
+  let opaqueMode = false;
+
+  function toggleOpaque() {
+    opaqueMode = !opaqueMode;
+    const btn = document.getElementById('opaqueToggle');
+    btn.classList.toggle('on', opaqueMode);
+    btn.setAttribute('aria-pressed', opaqueMode);
+    document.getElementById('chartLegend').style.visibility = opaqueMode ? 'hidden' : 'visible';
+    updateChart(false);
+  }
+
   function updateChart(animate = true) {
     spiderChart.data.datasets = members.map((mem, i) => {
       const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+      const bg     = opaqueMode ? 'rgba(30,33,48,0.92)' : c.bg;
+      const border = opaqueMode ? 'rgba(0,0,0,0)'       : c.border;
       return {
         label: mem.name, data: mem.values,
-        backgroundColor: c.bg, borderColor: c.border, borderWidth: 1.5,
-        pointBackgroundColor: c.border, pointBorderColor: '#0b0c10',
-        pointBorderWidth: 2, pointRadius: 4, pointHoverRadius: 8,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: opaqueMode ? 0 : 1.5,
+        pointBackgroundColor: border,
+        pointBorderColor: '#0b0c10',
+        pointBorderWidth: opaqueMode ? 0 : 2,
+        pointRadius: opaqueMode ? 0 : 4,
+        pointHoverRadius: opaqueMode ? 0 : 8,
       };
     });
     spiderChart.options.animation = animate ? { duration: 250, easing: 'easeInOutQuart' } : false;
@@ -735,6 +824,23 @@
           <input type="range" min="0" max="12" step="1" value="${val}"
             id="range-${ai}"
             data-ai="${ai}" style="accent-color:${c.border};--thumb-color:${c.border};width:100%;margin:0"
+            onmousedown="
+              (function(e){
+                var rect=e.target.getBoundingClientRect();
+                var trackW=rect.width, thumbR=9;
+                var ratio=e.target.value/12;
+                var thumbX=rect.left + thumbR + ratio*(trackW - thumbR*2);
+                if(Math.abs(e.clientX - thumbX) > thumbR + 4){ e.preventDefault(); }
+              })(event)"
+            ontouchstart="
+              (function(e){
+                var rect=e.target.getBoundingClientRect();
+                var trackW=rect.width, thumbR=9;
+                var ratio=e.target.value/12;
+                var thumbX=rect.left + thumbR + ratio*(trackW - thumbR*2);
+                var tx=e.touches[0].clientX;
+                if(Math.abs(tx - thumbX) > thumbR + 8){ e.preventDefault(); }
+              })(event)"
             oninput="members[${activeMember}].values[${ai}]=+this.value;updateThumbLabel(${ai},+this.value);updateChart(false)"/>
           <span id="val-${ai}" style="
             position:absolute;
@@ -817,77 +923,145 @@
     renderTabs(); renderPanel(); updateChart(); renderLegend();
   }
 
-  // ── Drag on chart ──
+  // ── Drag on chart — node-only, axis-projected, integer steps ──
   (function setupChartDrag() {
     const canvas = document.getElementById('spiderChart');
     let draggingIdx = null;
+
     function center() {
       const a = spiderChart.chartArea;
       return { x:(a.left+a.right)/2, y:(a.top+a.bottom)/2, r:Math.min(a.right-a.left,a.bottom-a.top)/2 };
     }
-    function angle(i,total){ return (2*Math.PI*i/total)-Math.PI/2; }
-    function getPos(e){
-      const rect=canvas.getBoundingClientRect(), src=e.touches?e.touches[0]:e;
-      return { x:(src.clientX-rect.left)*(canvas.width/rect.width), y:(src.clientY-rect.top)*(canvas.height/rect.height) };
+    function angle(i, total) { return (2*Math.PI*i/total) - Math.PI/2; }
+
+    // Get position in Chart.js internal coordinates (accounts for DPR)
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const src  = e.touches ? e.touches[0] : e;
+      const dpr  = window.devicePixelRatio || 1;
+      return {
+        x: (src.clientX - rect.left) / rect.width  * (canvas.width  / dpr),
+        y: (src.clientY - rect.top)  / rect.height * (canvas.height / dpr)
+      };
     }
-    function findPoint(px,py){
-      const {x:cx,y:cy,r:cr}=center(), n=axisLabels.length;
-      let best=-1, bestD=35;
-      members[activeMember].values.forEach((v,i)=>{
-        const a=angle(i,n), ratio=v/12;
-        const d=Math.hypot(px-(cx+Math.cos(a)*cr*ratio), py-(cy+Math.sin(a)*cr*ratio));
-        if(d<bestD){bestD=d;best=i;}
+
+    // Update cursor based on proximity to any node
+    function updateCursor(e) {
+      if (draggingIdx !== null) return;
+      const {x, y} = getPos(e);
+      const idx = findNode(x, y, 40);
+      canvas.style.cursor = idx !== -1 ? 'grab' : '';
+    }
+
+    function findNode(px, py, hitR) {
+      const {x:cx, y:cy, r:cr} = center();
+      const n = axisLabels.length;
+      let best = -1, bestD = hitR;
+      members[activeMember].values.forEach((v, i) => {
+        const a = angle(i, n), ratio = v / 12;
+        const nx = cx + Math.cos(a) * cr * ratio;
+        const ny = cy + Math.sin(a) * cr * ratio;
+        const d  = Math.hypot(px - nx, py - ny);
+        if (d < bestD) { bestD = d; best = i; }
       });
       return best;
     }
-    function onDown(e){ const {x,y}=getPos(e); draggingIdx=findPoint(x,y); if(draggingIdx!==-1)e.preventDefault(); }
-    function onMove(e){
-      if(draggingIdx===null||draggingIdx===-1)return; e.preventDefault();
-      const {x:px,y:py}=getPos(e),{x:cx,y:cy,r:cr}=center(),n=axisLabels.length;
-      const a=angle(draggingIdx,n),dx=Math.cos(a),dy=Math.sin(a);
-      const val=Math.round(Math.max(0,Math.min(12,((px-cx)*dx+(py-cy)*dy)/cr*12)));
-      members[activeMember].values[draggingIdx]=val;
-      const sl=document.querySelector(`input[data-ai="${draggingIdx}"]`);
-      const vl=document.getElementById(`val-${draggingIdx}`);
-      if(sl)sl.value=val; if(vl)vl.textContent=val; updateThumbLabel(draggingIdx,val);
-      updateChart(false);
+
+    function projectToAxis(px, py, idx) {
+      const {x:cx, y:cy, r:cr} = center();
+      const a  = angle(idx, axisLabels.length);
+      const dx = Math.cos(a), dy = Math.sin(a);
+      const dot = (px - cx) * dx + (py - cy) * dy;
+      return Math.round(Math.max(0, Math.min(12, (dot / cr) * 12)));
     }
-    function onUp(){ draggingIdx=null; }
-    canvas.addEventListener('mousedown',onDown);
-    canvas.addEventListener('mousemove',onMove);
-    canvas.addEventListener('mouseup',onUp);
-    canvas.addEventListener('touchstart',onDown,{passive:false});
-    canvas.addEventListener('touchmove',onMove,{passive:false});
-    canvas.addEventListener('touchend',onUp);
+
+    function syncSlider(ai, val) {
+      const sl = document.querySelector(`input[data-ai="${ai}"]`);
+      if (sl) sl.value = val;
+      updateThumbLabel(ai, val);
+    }
+
+    function onDown(e) {
+      const {x, y} = getPos(e);
+      const idx = findNode(x, y, 40);
+      if (idx === -1) return;
+      e.preventDefault();
+      draggingIdx = idx;
+      canvas.style.cursor = 'grabbing';
+    }
+
+    function onMove(e) {
+      updateCursor(e);
+      if (draggingIdx === null || draggingIdx === -1) return;
+      e.preventDefault();
+      const {x, y} = getPos(e);
+      const val = projectToAxis(x, y, draggingIdx);
+      if (val !== members[activeMember].values[draggingIdx]) {
+        members[activeMember].values[draggingIdx] = val;
+        syncSlider(draggingIdx, val);
+        updateChart(false);
+      }
+    }
+
+    function onUp() {
+      draggingIdx = null;
+      canvas.style.cursor = '';
+    }
+
+    canvas.addEventListener('mousedown',  onDown);
+    canvas.addEventListener('mousemove',  onMove);
+    canvas.addEventListener('mouseup',    onUp);
+    canvas.addEventListener('mouseleave', onUp);
+    canvas.addEventListener('touchstart', onDown, {passive: false});
+    canvas.addEventListener('touchmove',  onMove, {passive: false});
+    canvas.addEventListener('touchend',   onUp);
   })();
 
   // ── Download PNG ──
   function downloadChart() {
     const PAD=48, chartCanvas=document.getElementById('spiderChart'), dpr=window.devicePixelRatio||1;
-    const legendItems=members.map((mem,i)=>({name:mem.name,color:MEMBER_COLOURS[i%MEMBER_COLOURS.length].border}));
+    const chartW=chartCanvas.width/dpr, chartH=chartCanvas.height/dpr;
+
+    const showLegend = !opaqueMode;
+    const legendItems = showLegend ? members.map((mem,i)=>({name:mem.name,color:MEMBER_COLOURS[i%MEMBER_COLOURS.length].border})) : [];
     const swatchW=20,swatchH=3,gap=8,itemGap=24,fontSize=13;
     const tmp=document.createElement('canvas').getContext('2d');
     tmp.font=`600 ${fontSize}px Syne, sans-serif`;
     const itemWidths=legendItems.map(it=>swatchW+gap+tmp.measureText(it.name).width);
-    const totalLegendW=itemWidths.reduce((a,b)=>a+b,0)+(legendItems.length-1)*itemGap;
-    const chartW=chartCanvas.width/dpr, chartH=chartCanvas.height/dpr;
-    const totalW=chartW+PAD*2, totalH=chartH+PAD*2+24+16;
+    const totalLegendW=legendItems.length ? itemWidths.reduce((a,b)=>a+b,0)+(legendItems.length-1)*itemGap : 0;
+    const legendH = showLegend ? 24+16 : 0;
+    const watermarkH = 28;
+
+    const totalW=chartW+PAD*2, totalH=chartH+PAD*2+legendH+watermarkH;
     const off=document.createElement('canvas');
     off.width=totalW*dpr; off.height=totalH*dpr;
     const octx=off.getContext('2d');
     octx.scale(dpr,dpr);
     octx.fillStyle='#0b0c10'; octx.fillRect(0,0,totalW,totalH);
     octx.drawImage(chartCanvas,PAD,PAD,chartW,chartH);
-    const legendY=PAD+chartH+16; let legendX=(totalW-totalLegendW)/2;
-    legendItems.forEach((it,i)=>{
-      octx.fillStyle=it.color;
-      octx.beginPath(); octx.roundRect(legendX,legendY+(fontSize-swatchH)/2,swatchW,swatchH,2); octx.fill();
-      octx.font=`600 ${fontSize}px Syne, sans-serif`; octx.textBaseline='middle';
-      octx.fillText(it.name,legendX+swatchW+gap,legendY+fontSize/2);
-      legendX+=itemWidths[i]+itemGap;
-    });
+
+    if (showLegend) {
+      const legendY=PAD+chartH+16; let legendX=(totalW-totalLegendW)/2;
+      legendItems.forEach((it,i)=>{
+        octx.fillStyle=it.color;
+        octx.beginPath(); octx.roundRect(legendX,legendY+(fontSize-swatchH)/2,swatchW,swatchH,2); octx.fill();
+        octx.font=`600 ${fontSize}px Syne, sans-serif`; octx.textBaseline='middle';
+        octx.fillText(it.name,legendX+swatchW+gap,legendY+fontSize/2);
+        legendX+=itemWidths[i]+itemGap;
+      });
+    }
+
+    // Watermark
+    const wmText = `The Deejay Graph © 2020–${new Date().getFullYear()} by Dhaneesh Jameson is licensed under CC BY-NC 4.0`;
+    const wmY = totalH - watermarkH/2;
+    octx.font = '400 10px monospace';
+    octx.fillStyle = 'rgba(255,255,255,0.25)';
+    octx.textBaseline = 'middle';
+    octx.textAlign = 'center';
+    octx.fillText(wmText, totalW/2, wmY);
+
     const link=document.createElement('a');
-    link.download='team-competence-chart.png'; link.href=off.toDataURL('image/png');
+    link.download='The_deejay_graph.png'; link.href=off.toDataURL('image/png');
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
@@ -899,19 +1073,19 @@
   const notifications = [
     {
       heading: 'There is no perfect hexagon',
-      body: 'Stop hunting for "perfect hexagon" in one person. The idea is to identify your teammate\'s peak quality. Build a team where strengths offset gaps.'
+      body: 'Don\'t look for the \'perfect hexagon\' in an individual. Map your teammates\' peaks to build a squad where strengths cover gaps, the same way you\'d scout a sports team'
     },
     {
-      heading: 'Score by Seniority',
-      bullets: ['Level 1 — Up to 4', 'Level 2 — Up to 8', 'Level 3 — Up to 12']
+      heading: 'Know the scale',
+      bullets: ['Level 1 (Emerging) — Up to 4', 'Level 2 (Established) — Up to 8', 'Level 3 (Distinguished) — Up to 12']
     },
     {
-      heading: 'Name your teammate',
-      body: 'Double-click any "Member" tag to rename it.'
+      heading: 'Renaming tags',
+      body: 'Select the label of any "Member" tag to rename it.'
     },
     {
-      heading: 'Is it relevant in the AI Era?',
-      body: 'In the AI-dominated era, skills are becoming mere markdown files and getting commoditised. AI is the force multiplier that sets the floor, but true human competency remains the foundation that raises the ceiling.'
+      heading: 'Relevance in the AI era',
+      body: 'Yes! more than ever! With AI commoditising execution, a designer\'s value is increasingly defined by their foundational competencies'
     },
   ];
 
@@ -971,7 +1145,16 @@
   </div>
   <div class="notif-body" id="accordionBody"></div>
   <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);flex-shrink:0">
-    <span style="font-family:var(--font-mono);font-size:0.55rem;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase">Created by Dhaneesh Jameson</span>
+    <span style="font-family:var(--font-mono);font-size:0.58rem;color:var(--muted);line-height:1.7;display:flex;flex-wrap:wrap;align-items:center;gap:0.2rem">
+      <a href="http://hellodeejay.com/thedeejaygraph" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">The Deejay Graph</a>
+      © 2020–<script>document.write(new Date().getFullYear())</script> by
+      <a href="https://www.linkedin.com/in/dhaneeshjameson/" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">Dhaneesh Jameson</a>
+      is licensed under
+      <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none">CC BY-NC 4.0</a>
+      <img src="https://mirrors.creativecommons.org/presskit/icons/cc.svg" alt="" style="max-width:1em;max-height:1em;margin-left:.2em;filter:invert(0.5)">
+      <img src="https://mirrors.creativecommons.org/presskit/icons/by.svg" alt="" style="max-width:1em;max-height:1em;margin-left:.2em;filter:invert(0.5)">
+      <img src="https://mirrors.creativecommons.org/presskit/icons/nc.svg" alt="" style="max-width:1em;max-height:1em;margin-left:.2em;filter:invert(0.5)">
+    </span>
   </div>
 </div>
 </body>
