@@ -940,7 +940,7 @@
                 var ratio=e.target.value/12;
                 var thumbX=rect.left + thumbR + ratio*(trackW - thumbR*2);
                 var tx=e.touches[0].clientX;
-                if(Math.abs(tx - thumbX) > thumbR + 8){ e.preventDefault(); }
+                if(Math.abs(tx - thumbX) > thumbR + 4){ e.preventDefault(); e.stopPropagation(); return false; }
               })(event)"
             oninput="members[${activeMember}].values[${ai}]=+this.value;updateThumbLabel(${ai},+this.value);updateChart(false)"/>
           <span id="val-${ai}" style="
