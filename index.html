@@ -316,8 +316,16 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      justify-content: space-between;
     }
     .panel-title svg { flex-shrink: 0; opacity: 0.75; }
+    .panel-title-left { display: flex; align-items: center; gap: 0.5rem; }
+    .section-eye-btn {
+      background: none; border: none; padding: 0; cursor: pointer;
+      color: inherit; opacity: 0.7; line-height: 1; flex-shrink: 0;
+      transition: opacity 0.2s;
+    }
+    .section-eye-btn:hover { opacity: 1; }
 
     /* ── MEMBER TABS ── */
     .member-tabs {
@@ -358,6 +366,7 @@
     .member-tab .tab-name {
       outline: none; border: none; background: transparent;
       color: inherit; font: inherit; width: 62px; cursor: pointer;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .member-tab.active .tab-name { cursor: text; }
 
@@ -728,7 +737,7 @@
   const axisLabels = ['Hunter','Q1','Q4','Farmer','Q3','Q2'];
   const panelOrder = [0, 3, 1, 5, 4, 2]; // Hunter, Farmer, Q1, Q2, Q3, Q4
 
-  let members      = [{ name: 'Member 1', values: [6, 6, 6, 6, 6, 6] }];
+  let members      = [{ name: 'Member 1', values: [6, 6, 6, 6, 6, 6], visible: true }];
   let activeMember = 0;
 
   // ── Chart ──
@@ -766,12 +775,22 @@
 
   let opaqueMode = false;
 
+  function toggleMindsets() {
+    members[activeMember].visible = !members[activeMember].visible;
+    renderTabs(); renderPanel(); updateChart(false); renderLegend();
+  }
+
+  function toggleCore() {
+    members[activeMember].visible = !members[activeMember].visible;
+    renderTabs(); renderPanel(); updateChart(false); renderLegend();
+  }
+
   function toggleOpaque() {
     opaqueMode = !opaqueMode;
     const btn = document.getElementById('opaqueToggle');
     if (btn) { btn.classList.toggle('on', opaqueMode); btn.setAttribute('aria-pressed', opaqueMode); }
-    document.getElementById('chartLegend').style.visibility = opaqueMode ? 'hidden' : 'visible';
     updateChart(false);
+    renderLegend();
   }
 
   function updateChart(animate = true) {
@@ -781,18 +800,21 @@
     spiderChart.data.datasets = order.map(i => {
       const mem = members[i];
       const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
-      const bg     = opaqueMode ? 'rgba(30,33,48,0.92)' : c.bg;
-      const border = opaqueMode ? 'rgba(0,0,0,0)'       : c.border;
+      // Active member graph hidden when sections are locked off
+      // Active member graph hidden when that member is locked off
+      const isHidden = !members[i].visible;
+      const bg     = isHidden ? 'rgba(0,0,0,0)' : opaqueMode ? 'rgba(30,33,48,0.92)' : c.bg;
+      const border = isHidden ? 'rgba(0,0,0,0)' : opaqueMode ? 'rgba(0,0,0,0)' : c.border;
       return {
         label: mem.name, data: mem.values,
         backgroundColor: bg,
         borderColor: border,
-        borderWidth: opaqueMode ? 0 : 1.5,
+        borderWidth: isHidden || opaqueMode ? 0 : 1.5,
         pointBackgroundColor: border,
         pointBorderColor: '#0b0c10',
-        pointBorderWidth: opaqueMode ? 0 : 2,
-        pointRadius: opaqueMode ? 0 : 4,
-        pointHoverRadius: opaqueMode ? 0 : 8,
+        pointBorderWidth: isHidden || opaqueMode ? 0 : 2,
+        pointRadius: isHidden || opaqueMode ? 0 : 4,
+        pointHoverRadius: isHidden || opaqueMode ? 0 : 8,
       };
     });
     spiderChart.options.animation = animate ? { duration: 250, easing: 'easeInOutQuart' } : false;
@@ -875,11 +897,23 @@
         const tab = document.createElement('div');
         tab.className = 'member-tab' + (i === activeMember ? ' active' : '');
         tab.style.borderColor = i === activeMember ? c.border : 'transparent';
+        // Dim capsule when locked
+        // Dim capsule when that member is locked
+        if (!members[i].visible) {
+          tab.style.opacity = '0.35';
+        }
+        if (i === activeMember && !members[activeMember].visible) {
+          tab.style.pointerEvents = 'none';
+        }
+        const dotStyle = members[i].visible
+          ? `background:${c.border}`
+          : `background:transparent;border:1px solid ${c.border}`;
+        const dispName = mem.name.length > 6 ? mem.name.slice(0, 6) + '…' : mem.name;
         tab.innerHTML = `
-          <span class="tab-dot" style="background:${c.border}"></span>
-          <input class="tab-name" value="${mem.name}" readonly
-            onclick="if(${i}===activeMember){this.removeAttribute('readonly');this.select()}else{selectMember(${i})}"
-            onblur="members[${i}].name=this.value;this.setAttribute('readonly','');renderTabs();updateChart();renderLegend()"
+          <span class="tab-dot" style="${dotStyle}"></span>
+          <input class="tab-name" value="${dispName}" readonly maxlength="8"
+            onclick="if(${i}===activeMember){this.value=members[${i}].name;this.removeAttribute('readonly');this.select()}else{selectMember(${i})}"
+            onblur="(function(el){var v=el.value.trim()||'Member ${i+1}';members[${i}].name=v;el.setAttribute('readonly','');renderTabs();updateChart();renderLegend();})(this)"
             onkeydown="if(event.key==='Enter'){this.blur()}"
             title="Click to rename"
           />
@@ -933,7 +967,20 @@
         title.className = 'panel-title';
         title.style.color = c.border;
         title.style.marginTop = pi === 0 ? '1.8rem' : '2.4rem';
-        title.innerHTML = sectionIcons[pi] + sectionLabels[pi];
+
+        const leftGroup = `<span class="panel-title-left">${sectionIcons[pi]}${sectionLabels[pi]}</span>`;
+
+        const eyeOpen  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`;
+        const eyeClosed = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>`;
+
+        let eyeBtn = '';
+        if (pi === 0) {
+          eyeBtn = `<button class="section-eye-btn" onclick="toggleMindsets()" title="Toggle mindsets">${members[activeMember].visible ? eyeOpen : eyeClosed}</button>`;
+        } else if (pi === 2) {
+          eyeBtn = `<button class="section-eye-btn" onclick="toggleCore()" title="Toggle core competencies">${members[activeMember].visible ? eyeOpen : eyeClosed}</button>`;
+        }
+
+        title.innerHTML = leftGroup + eyeBtn;
         panel.appendChild(title);
         // Divider below each section title
         const hr = document.createElement('div');
@@ -988,6 +1035,9 @@
           }).join('')}
         </div>
       `;
+      if (!members[activeMember].visible) {
+        row.style.display = 'none';
+      }
       panel.appendChild(row);
     });
 
@@ -1039,10 +1089,12 @@
   // ── Legend ──
   function renderLegend() {
     document.getElementById('chartLegend').innerHTML = members.map((mem, i) => {
+      if (!mem.visible) return '';
       const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+      const nameColour = opaqueMode ? 'var(--muted)' : c.border;
+      const displayName = mem.name.length > 6 ? mem.name.slice(0, 6) + '...' : mem.name;
       return `<div class="legend-item">
-        <span class="legend-swatch" style="background:${c.border}"></span>
-        <span style="color:${c.border}">${mem.name}</span>
+        <span style="color:${nameColour}">${displayName}</span>
       </div>`;
     }).join('');
   }
@@ -1086,7 +1138,7 @@
 
   function addMember() {
     if (members.length >= 6) { showToast('Maximum limit reached'); return; }
-    members.push({ name: `Member ${members.length + 1}`, values: [6,6,6,6,6,6] });
+    members.push({ name: `Member ${members.length + 1}`, values: [6,6,6,6,6,6], visible: true });
     selectMember(members.length - 1);
   }
 
@@ -1157,6 +1209,7 @@
     }
 
     function onDown(e) {
+      if (!members[activeMember].visible) return;
       const {x, y} = getPos(e);
       const idx = findNode(x, y, 40);
       if (idx === -1) return;
@@ -1197,12 +1250,22 @@
     const PAD=48, chartCanvas=document.getElementById('spiderChart'), dpr=window.devicePixelRatio||1;
     const chartW=chartCanvas.width/dpr, chartH=chartCanvas.height/dpr;
 
-    const showLegend = !opaqueMode;
-    const legendItems = showLegend ? members.map((mem,i)=>({name:mem.name,color:MEMBER_COLOURS[i%MEMBER_COLOURS.length].border})) : [];
-    const swatchW=20,swatchH=3,gap=8,itemGap=24,fontSize=13;
+    // Only include visible members, matching screen behaviour
+    const visibleMembers = members.map((mem,i) => ({...mem, i})).filter(m => m.visible);
+    const showLegend = visibleMembers.length > 0;
+
+    // In team view (opaqueMode): names only in muted colour, no swatch
+    // In normal view: coloured name, no swatch (matches screen which has no swatch line)
+    const legendItems = visibleMembers.map(m => ({
+      name: m.name.length > 6 ? m.name.slice(0,6) + '...' : m.name,
+      color: opaqueMode ? '#555b7a' : MEMBER_COLOURS[m.i % MEMBER_COLOURS.length].border,
+      showSwatch: false,
+    }));
+
+    const swatchW=0, swatchH=3, gap=0, itemGap=24, fontSize=13;
     const tmp=document.createElement('canvas').getContext('2d');
     tmp.font=`600 ${fontSize}px Syne, sans-serif`;
-    const itemWidths=legendItems.map(it=>swatchW+gap+tmp.measureText(it.name).width);
+    const itemWidths=legendItems.map(it=>tmp.measureText(it.name).width);
     const totalLegendW=legendItems.length ? itemWidths.reduce((a,b)=>a+b,0)+(legendItems.length-1)*itemGap : 0;
     const legendH = showLegend ? 24+16 : 0;
     const totalW=chartW+PAD*2;
@@ -1219,9 +1282,8 @@
       const legendY=PAD+chartH+16; let legendX=(totalW-totalLegendW)/2;
       legendItems.forEach((it,i)=>{
         octx.fillStyle=it.color;
-        octx.beginPath(); octx.roundRect(legendX,legendY+(fontSize-swatchH)/2,swatchW,swatchH,2); octx.fill();
         octx.font=`600 ${fontSize}px Syne, sans-serif`; octx.textBaseline='middle';
-        octx.fillText(it.name,legendX+swatchW+gap,legendY+fontSize/2);
+        octx.fillText(it.name, legendX, legendY+fontSize/2);
         legendX+=itemWidths[i]+itemGap;
       });
     }
