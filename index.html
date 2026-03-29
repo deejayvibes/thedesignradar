@@ -1185,9 +1185,25 @@
     octx.textAlign = 'center';
     octx.fillText(wmText, totalW / 2, wmY);
 
-    const link=document.createElement('a');
-    link.download='The_deejay_graph.png'; link.href=off.toDataURL('image/png');
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    // On mobile with Web Share API support — share the image
+    if (navigator.share && window.innerWidth < 1000) {
+      off.toBlob(async blob => {
+        try {
+          const file = new File([blob], 'The_deejay_graph.png', { type: 'image/png' });
+          await navigator.share({ files: [file], title: 'The Deejay Graph' });
+        } catch (err) {
+          // User cancelled or share failed — fall back to download
+          const link = document.createElement('a');
+          link.download = 'The_deejay_graph.png';
+          link.href = URL.createObjectURL(blob);
+          document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+      }, 'image/png');
+    } else {
+      const link=document.createElement('a');
+      link.download='The_deejay_graph.png'; link.href=off.toDataURL('image/png');
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
   }
 
   // ── Layout helpers (no-op — bottom sheet removed) ──
