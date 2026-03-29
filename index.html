@@ -313,7 +313,11 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
+    .panel-title svg { flex-shrink: 0; opacity: 0.75; }
 
     /* ── MEMBER TABS ── */
     .member-tabs {
@@ -322,6 +326,13 @@
       gap: 0.4rem;
       padding-bottom: 0.75rem;
       margin-bottom: 0.75rem;
+      min-height: 2.2rem;
+    }
+
+    /* Desktop tabs: fixed height — sections below never shift */
+    #memberTabsDesktop {
+      max-height: 8rem;
+      overflow: hidden;
     }
 
     .member-tab {
@@ -361,9 +372,9 @@
     .add-member-btn {
       padding: 0.3rem 0.7rem;
       border-radius: 100px;
-      border: 1.5px solid var(--border);
-      background: transparent;
-      color: var(--muted);
+      border: 1.5px solid var(--accent);
+      background: var(--accent);
+      color: #000;
       font-size: 0.72rem;
       cursor: pointer;
       transition: all 0.18s;
@@ -371,9 +382,10 @@
       display: flex;
       align-items: center;
       gap: 0.3rem;
+      font-weight: 700;
     }
-    .add-member-btn:hover { border-color: var(--accent); color: var(--text); }
-    .add-member-btn .plus { color: var(--accent); font-size: 1rem; font-weight: 300; line-height: 1; }
+    .add-member-btn:hover { background: #5de89a; border-color: #5de89a; }
+    .add-member-btn .plus { color: #000; font-size: 1rem; font-weight: 300; line-height: 1; }
 
     /* ── METRIC ROWS ── */
     .metric-row {
@@ -571,6 +583,20 @@
       }
 
       header { padding: 1rem 1.25rem; }
+
+      /* Larger touch targets and font for member capsules on mobile */
+      .member-tab {
+        padding: 0.45rem 0.8rem 0.45rem 0.65rem;
+        font-size: 0.85rem;
+        min-height: 36px;
+      }
+      .member-tab .tab-name { font-size: 0.85rem; }
+      .add-member-btn {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.85rem;
+        min-height: 36px;
+      }
+      .add-member-btn .plus { font-size: 1.1rem; }
     }
     .opaque-toggle-wrap {
       display: flex;
@@ -642,8 +668,8 @@
   <aside class="panel" id="mainPanel">
     <!-- Desktop: title + member tabs always visible above sliders -->
     <div class="desktop-only" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.25rem">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span class="panel-title">// Your Team</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:0.75rem;border-bottom:1px dotted rgba(255,255,255,0.35)">
+        <span class="panel-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Team Members</span>
         <span id="addMemberBtnDesktop"></span>
       </div>
       <div class="member-tabs" id="memberTabsDesktop" onclick="event.stopPropagation()"></div>
@@ -890,23 +916,25 @@
     // panelOrder: Hunter(0), Farmer(3), Q1(1), Q2(5), Q3(4), Q4(2)
     // Insert '// Mindsets' before Hunter (index 0 in panelOrder)
     // Insert '// Core Competencies' before Q1 (index 2 in panelOrder)
-    const sectionBreaks = { 0: '// Mindsets', 2: '// Core Competencies' };
+    const sectionIcons = {
+      0: `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/></svg>`,
+      2: `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>`
+    };
+    const sectionLabels = { 0: 'Mindsets', 2: 'Core Competencies' };
 
     panelOrder.forEach((ai, pi) => {
       // Inject section title if needed
-      if (sectionBreaks[pi] !== undefined) {
-        // Add a light divider above // Mindsets
-        if (pi === 0) {
-          const hr = document.createElement('div');
-          hr.style.cssText = 'width:100%;height:1px;background:var(--border);margin:0.5rem 0 1.5rem';
-          panel.appendChild(hr);
-        }
+      if (sectionLabels[pi] !== undefined) {
         const title = document.createElement('div');
         title.className = 'panel-title';
         title.style.color = c.border;
-        title.style.marginTop = pi === 0 ? '0' : '1rem';
-        title.textContent = sectionBreaks[pi];
+        title.style.marginTop = pi === 0 ? '1.8rem' : '2.4rem';
+        title.innerHTML = sectionIcons[pi] + sectionLabels[pi];
         panel.appendChild(title);
+        // Divider below each section title
+        const hr = document.createElement('div');
+        hr.style.cssText = 'width:100%;height:1px;background:none;border-top:1px dotted rgba(255,255,255,0.35);margin:0.75rem 0 0.5rem';
+        panel.appendChild(hr);
       }
 
       const label = axisLabels[ai];
@@ -1032,19 +1060,17 @@
     const anchor = (addSlot && addSlot.getBoundingClientRect().width > 0) ? addSlot : mobileAdd;
 
     if (anchor) {
-      const rect = anchor.getBoundingClientRect();
-      const toastW = 220; // approx width
-      let left = rect.left + rect.width / 2 - toastW / 2;
-      // Keep within viewport
-      left = Math.max(8, Math.min(left, window.innerWidth - toastW - 8));
-      const top = rect.top - (3 * 16) - 8; // 3rem above
-      t.style.left = left + 'px';
-      t.style.top  = Math.max(8, top) + 'px';
+      const rect  = anchor.getBoundingClientRect();
+      const toastW = 180;
+      const left   = rect.left - toastW - 8;
+      const top    = rect.top + rect.height / 2 - 14; // vertically centred
+      t.style.left      = Math.max(8, left) + 'px';
+      t.style.top       = top + 'px';
+      t.style.transform = '';
     } else {
-      // Fallback: top centre
-      t.style.left = '50%';
+      t.style.left      = '50%';
       t.style.transform = 'translateX(-50%)';
-      t.style.top = '5rem';
+      t.style.top       = '5rem';
     }
 
     t.classList.remove('show');
