@@ -1155,9 +1155,9 @@
     const itemWidths=legendItems.map(it=>swatchW+gap+tmp.measureText(it.name).width);
     const totalLegendW=legendItems.length ? itemWidths.reduce((a,b)=>a+b,0)+(legendItems.length-1)*itemGap : 0;
     const legendH = showLegend ? 24+16 : 0;
+    const totalW=chartW+PAD*2;
     const watermarkH = Math.max(28, Math.round(totalW * 0.04));
-
-    const totalW=chartW+PAD*2, totalH=chartH+PAD*2+legendH+watermarkH;
+    const totalH=chartH+PAD*2+legendH+watermarkH;
     const off=document.createElement('canvas');
     off.width=totalW*dpr; off.height=totalH*dpr;
     const octx=off.getContext('2d');
