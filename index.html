@@ -317,7 +317,6 @@
       flex-wrap: wrap;
       gap: 0.4rem;
       padding-bottom: 0.75rem;
-      border-bottom: 1px solid var(--border);
       margin-bottom: 0.75rem;
     }
 
@@ -356,17 +355,21 @@
     .member-tab.active .tab-remove { opacity: 1; }
 
     .add-member-btn {
-      padding: 0.3rem 0.55rem;
+      padding: 0.3rem 0.7rem;
       border-radius: 100px;
-      border: 1.5px dashed var(--border);
+      border: 1.5px solid var(--border);
       background: transparent;
       color: var(--muted);
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       cursor: pointer;
       transition: all 0.18s;
       line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
     }
-    .add-member-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .add-member-btn:hover { border-color: var(--accent); color: var(--text); }
+    .add-member-btn .plus { color: var(--accent); font-size: 1rem; font-weight: 300; line-height: 1; }
 
     /* ── METRIC ROWS ── */
     .metric-row {
@@ -445,20 +448,21 @@
       90%      { transform: translateX(3px); }
     }
     .toast {
-      margin-bottom: 1rem;
+      position: fixed;
+      z-index: 9999;
       background: #1e2130; border: 1px solid #ff6b9d; color: #ff6b9d;
-      font-family: var(--font-mono); font-size: 0.7rem;
-      padding: 0.5rem 1rem; border-radius: 8px; letter-spacing: 0.06em;
+      font-family: var(--font-mono); font-size: 0.65rem;
+      padding: 0.4rem 0.85rem; border-radius: 6px; letter-spacing: 0.06em;
       opacity: 0; pointer-events: none; transition: opacity 0.2s;
-      text-align: center; flex-shrink: 0;
+      white-space: nowrap;
     }
     .toast.show { opacity: 1; animation: shake 0.5s ease; }
 
     /* ── RIGHT PANEL ── */
     .chart-area {
       display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 2rem 3rem; gap: 1.25rem; position: relative;
+      align-items: center; justify-content: flex-start;
+      padding: 2rem 3rem 1.5rem; gap: 1rem; position: relative;
       overflow: hidden;
     }
 
@@ -475,7 +479,7 @@
     canvas#spiderChart { width: 100% !important; height: 100% !important; }
 
     /* ── LEGEND ── */
-    .chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; }
+    .chart-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem 1.25rem; margin-bottom: 24px; }
     .legend-item  { display: flex; align-items: center; gap: 0.4rem; font-family: var(--font-display); font-size: 0.75rem; font-weight: 600; }
     .legend-swatch { width: 20px; height: 3px; border-radius: 2px; flex-shrink: 0; }
 
@@ -492,24 +496,78 @@
     }
     .top-left    { top: 1.25rem; left: 1.5rem; }
     .top-right   { top: 1.25rem; right: 1.5rem; }
-    .bottom-centre {
-      bottom: 1.25rem;
-      left: 50%;
-      transform: translateX(-50%);
+
+    /* ── CHART BOTTOM BAR ── */
+    .chart-bottom-bar {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0 1.5rem;
+      margin-top: auto;
     }
 
-    footer { display: none; }
+    .chart-bottom-btns {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: nowrap;
+    }
 
-    @media (max-width: 800px) {
+    .chart-execution-label {
+      position: static;
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* sheet-peek hidden everywhere — no bottom sheet */
+    .sheet-peek { display: none; }
+    .mobile-only { display: none; }
+    .desktop-only { display: flex; flex-direction: column; }
+
+    @media (max-width: 999px) {
       main {
         grid-template-columns: 1fr;
         grid-template-rows: auto auto;
       }
-      .chart-area { order: -1; }
-      .panel { border-right: none; border-bottom: 1px solid var(--border); }
+
+      /* Chart first, panel below */
+      .chart-area {
+        order: 0;
+        padding-bottom: 1.5rem;
+      }
+
+      .panel {
+        order: 1;
+        position: static;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        transform: none;
+        box-shadow: none;
+        max-height: none;
+        overflow-y: visible;
+        border-radius: 0;
+      }
+
+      /* Bottom bar back to normal flow on mobile too */
+      .chart-bottom-bar {
+        position: static !important;
+        padding: 0 !important;
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      .chart-bottom-btns {
+        width: 100%;
+        justify-content: space-between;
+      }
+
       header { padding: 1rem 1.25rem; }
     }
-    /* ── OPAQUE TOGGLE ── */
     .opaque-toggle-wrap {
       display: flex;
       align-items: center;
@@ -578,7 +636,21 @@
 
 <main>
   <aside class="panel" id="mainPanel">
-    <div class="member-tabs" id="memberTabs"></div>
+    <!-- Desktop: title + member tabs always visible above sliders -->
+    <div class="desktop-only" style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:0.25rem">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span class="panel-title">// Your Team</span>
+        <span id="addMemberBtnDesktop"></span>
+      </div>
+      <div class="member-tabs" id="memberTabsDesktop" onclick="event.stopPropagation()"></div>
+    </div>
+    <!-- Mobile: peek strip with label + member tabs inside -->
+    <div class="sheet-peek" id="sheetPeek">
+      <div style="display:flex;flex-direction:column;gap:0.5rem;flex:1;min-width:0">
+        <span class="sheet-peek-label">Your Team</span>
+        <div class="member-tabs mobile-only" id="memberTabs" onclick="event.stopPropagation()"></div>
+      </div>
+    </div>
     <div class="toast" id="toast"></div>
     <div id="metricsPanel"></div>
   </aside>
@@ -592,17 +664,19 @@
       <canvas id="spiderChart"></canvas>
     </div>
     <div class="chart-legend" id="chartLegend"></div>
-    <span class="space-label bottom-centre">Execution Space</span>
-    <div style="position:absolute;bottom:1.25rem;left:1.5rem;z-index:2">
-      <button class="btn-download-sm" onclick="downloadChart()">⬇ Download</button>
-    </div>
-    <div style="position:absolute;bottom:1.25rem;right:1.5rem;display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;z-index:2">
-      <div style="display:flex;align-items:center;gap:0.4rem">
-        <span class="opaque-toggle-label">Team view</span>
-        <button class="opaque-toggle" id="opaqueToggle" onclick="toggleOpaque()" aria-pressed="false" title="Toggle team view">
-          <span class="opaque-toggle-thumb"></span>
-        </button>
+
+    <!-- Bottom bar: buttons + execution space stacked -->
+    <div class="chart-bottom-bar">
+      <div class="chart-bottom-btns">
+        <button class="btn-download-sm" onclick="downloadChart()">⬇ Download</button>
+        <div style="display:flex;align-items:center;gap:0.4rem">
+          <span class="opaque-toggle-label">Team view</span>
+          <button class="opaque-toggle" id="opaqueToggle" onclick="toggleOpaque()" aria-pressed="false" title="Toggle team view">
+            <span class="opaque-toggle-thumb"></span>
+          </button>
+        </div>
       </div>
+      <span class="space-label chart-execution-label">Execution Space</span>
     </div>
   </section>
 </main>
@@ -665,8 +739,7 @@
   function toggleOpaque() {
     opaqueMode = !opaqueMode;
     const btn = document.getElementById('opaqueToggle');
-    btn.classList.toggle('on', opaqueMode);
-    btn.setAttribute('aria-pressed', opaqueMode);
+    if (btn) { btn.classList.toggle('on', opaqueMode); btn.setAttribute('aria-pressed', opaqueMode); }
     document.getElementById('chartLegend').style.visibility = opaqueMode ? 'hidden' : 'visible';
     updateChart(false);
   }
@@ -759,31 +832,48 @@
 
   // ── Tabs ──
   function renderTabs() {
-    const tabsEl = document.getElementById('memberTabs');
-    tabsEl.innerHTML = '';
-    members.forEach((mem, i) => {
-      const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
-      const tab = document.createElement('div');
-      tab.className = 'member-tab' + (i === activeMember ? ' active' : '');
-      tab.style.borderColor = i === activeMember ? c.border : 'transparent';
-      tab.innerHTML = `
-        <span class="tab-dot" style="background:${c.border}"></span>
-        <input class="tab-name" value="${mem.name}" readonly
-          onclick="if(${i}===activeMember){this.removeAttribute('readonly');this.select()}else{selectMember(${i})}"
-          onblur="members[${i}].name=this.value;this.setAttribute('readonly','');renderTabs();updateChart();renderLegend()"
-          onkeydown="if(event.key==='Enter'){this.blur()}"
-          title="Click to rename"
-        />
-        ${members.length > 1 ? `<button class="tab-remove" onclick="removeMember(${i},event)">×</button>` : ''}
-      `;
-      tabsEl.appendChild(tab);
+    ['memberTabs', 'memberTabsDesktop'].forEach(containerId => {
+      const tabsEl = document.getElementById(containerId);
+      if (!tabsEl) return;
+      tabsEl.innerHTML = '';
+      members.forEach((mem, i) => {
+        const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+        const tab = document.createElement('div');
+        tab.className = 'member-tab' + (i === activeMember ? ' active' : '');
+        tab.style.borderColor = i === activeMember ? c.border : 'transparent';
+        tab.innerHTML = `
+          <span class="tab-dot" style="background:${c.border}"></span>
+          <input class="tab-name" value="${mem.name}" readonly
+            onclick="if(${i}===activeMember){this.removeAttribute('readonly');this.select()}else{selectMember(${i})}"
+            onblur="members[${i}].name=this.value;this.setAttribute('readonly','');renderTabs();updateChart();renderLegend()"
+            onkeydown="if(event.key==='Enter'){this.blur()}"
+            title="Click to rename"
+          />
+          ${members.length > 1 ? `<button class="tab-remove" onclick="removeMember(${i},event)">×</button>` : ''}
+        `;
+        tabsEl.appendChild(tab);
+      });
+      // Add button: in mobile tabs inline; on desktop goes into the heading slot
+      if (containerId === 'memberTabsDesktop') {
+        const slot = document.getElementById('addMemberBtnDesktop');
+        if (slot) {
+          slot.innerHTML = '';
+          const addBtn = document.createElement('button');
+          addBtn.className = 'add-member-btn';
+          addBtn.innerHTML = '<span class="plus">+</span><span>Add</span>';
+          addBtn.title = 'Add team member';
+          addBtn.onclick = addMember;
+          slot.appendChild(addBtn);
+        }
+      } else {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-member-btn';
+        addBtn.innerHTML = '<span class="plus">+</span><span>Add</span>';
+        addBtn.title = 'Add team member';
+        addBtn.onclick = addMember;
+        tabsEl.appendChild(addBtn);
+      }
     });
-    const addBtn = document.createElement('button');
-    addBtn.className = 'add-member-btn';
-    addBtn.textContent = '+';
-    addBtn.title = 'Add team member';
-    addBtn.onclick = addMember;
-    tabsEl.appendChild(addBtn);
   }
 
   // ── Sliders ──
@@ -897,12 +987,35 @@
   function selectMember(i) {
     activeMember = i;
     renderTabs(); renderPanel(); updateChart(); renderLegend();
+    positionAfterPaint();
   }
 
   // ── Toast ──
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
+
+    // Position above the Add button (desktop slot or mobile tab container)
+    const addSlot = document.getElementById('addMemberBtnDesktop');
+    const mobileAdd = document.querySelector('#memberTabs .add-member-btn');
+    const anchor = (addSlot && addSlot.getBoundingClientRect().width > 0) ? addSlot : mobileAdd;
+
+    if (anchor) {
+      const rect = anchor.getBoundingClientRect();
+      const toastW = 220; // approx width
+      let left = rect.left + rect.width / 2 - toastW / 2;
+      // Keep within viewport
+      left = Math.max(8, Math.min(left, window.innerWidth - toastW - 8));
+      const top = rect.top - (3 * 16) - 8; // 3rem above
+      t.style.left = left + 'px';
+      t.style.top  = Math.max(8, top) + 'px';
+    } else {
+      // Fallback: top centre
+      t.style.left = '50%';
+      t.style.transform = 'translateX(-50%)';
+      t.style.top = '5rem';
+    }
+
     t.classList.remove('show');
     void t.offsetWidth;
     t.classList.add('show');
@@ -1031,7 +1144,7 @@
     const itemWidths=legendItems.map(it=>swatchW+gap+tmp.measureText(it.name).width);
     const totalLegendW=legendItems.length ? itemWidths.reduce((a,b)=>a+b,0)+(legendItems.length-1)*itemGap : 0;
     const legendH = showLegend ? 24+16 : 0;
-    const watermarkH = 28;
+    const watermarkH = Math.max(28, Math.round(totalW * 0.04));
 
     const totalW=chartW+PAD*2, totalH=chartH+PAD*2+legendH+watermarkH;
     const off=document.createElement('canvas');
@@ -1052,23 +1165,35 @@
       });
     }
 
-    // Watermark
+    // Watermark — font scales with canvas width, always readable
+    const wmFontSize = Math.max(10, Math.round(totalW * 0.018));
     const wmText = `The Deejay Graph © 2020–${new Date().getFullYear()} by Dhaneesh Jameson is licensed under CC BY-NC 4.0`;
-    const wmY = totalH - watermarkH/2;
-    octx.font = '400 10px monospace';
-    octx.fillStyle = 'rgba(255,255,255,0.25)';
+    const wmY = totalH - watermarkH / 2;
+    octx.font = `400 ${wmFontSize}px monospace`;
+    octx.fillStyle = 'rgba(255,255,255,0.35)';
     octx.textBaseline = 'middle';
     octx.textAlign = 'center';
-    octx.fillText(wmText, totalW/2, wmY);
+    octx.fillText(wmText, totalW / 2, wmY);
 
     const link=document.createElement('a');
     link.download='The_deejay_graph.png'; link.href=off.toDataURL('image/png');
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
+  // ── Layout helpers (no-op — bottom sheet removed) ──
+  function updatePeekHeight() {}
+  function toggleSheet() {}
+  function positionAbovePanel() {
+    const b = document.querySelector('.chart-bottom-bar');
+    if (b) { b.style.position=''; b.style.bottom=''; b.style.left=''; b.style.right=''; b.style.zIndex=''; b.style.padding=''; }
+  }
+  function positionAfterPaint() {}
+  window.addEventListener('resize', positionAbovePanel);
+
   // ── Init ──
   renderTabs(); renderPanel(); updateChart(); renderLegend();
   setTimeout(drawExtensionLines, 300);
+  positionAfterPaint();
 
   // ── Notification Drawer ──
   const notifications = [
