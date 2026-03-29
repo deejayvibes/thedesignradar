@@ -958,7 +958,7 @@
             onkeydown="if(event.key==='Enter'){this.blur()}"
             title="Click to rename"
           />
-          ${members.length > 1 ? `<button class="tab-remove" onclick="removeMember(${i},event)">×</button>` : ''}
+          ${members.length > 1 && members[i].visible ? `<button class="tab-remove" onclick="removeMember(${i},event)">×</button>` : ''}
         `;
         tabsEl.appendChild(tab);
       });
@@ -1214,6 +1214,7 @@
   function removeMember(i, e) {
     e.stopPropagation();
     if (members.length <= 1) return;
+    if (!members[i].visible) return; // cannot delete a hidden member
     members.splice(i, 1);
     activeMember = Math.min(activeMember, members.length - 1);
     renderTabs(); renderPanel(); updateChart(); renderLegend();
