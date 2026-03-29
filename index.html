@@ -324,8 +324,56 @@
       background: none; border: none; padding: 0; cursor: pointer;
       color: inherit; opacity: 0.7; line-height: 1; flex-shrink: 0;
       transition: opacity 0.2s;
+      position: relative;
     }
     .section-eye-btn:hover { opacity: 1; }
+    .section-eye-btn .eye-tip {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: #1e2130;
+      border: 1px solid #2e3250;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 100;
+    }
+    .section-eye-btn .eye-tip.visible { opacity: 1; }
+
+    /* Enable to edit callout */
+    #eyeCallout {
+      position: fixed;
+      z-index: 9999;
+      background: #1e2130;
+      border: 1px solid #ff6b9d;
+      color: #ff6b9d;
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    #eyeCallout::after {
+      content: '';
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-left-color: #ff6b9d;
+    }
+    #eyeCallout.show { opacity: 1; animation: shake 0.5s ease; }
 
     /* ── MEMBER TABS ── */
     .member-tabs {
@@ -897,14 +945,7 @@
         const tab = document.createElement('div');
         tab.className = 'member-tab' + (i === activeMember ? ' active' : '');
         tab.style.borderColor = i === activeMember ? c.border : 'transparent';
-        // Dim capsule when locked
-        // Dim capsule when that member is locked
-        if (!members[i].visible) {
-          tab.style.opacity = '0.35';
-        }
-        if (i === activeMember && !members[activeMember].visible) {
-          tab.style.pointerEvents = 'none';
-        }
+        if (!members[i].visible) tab.style.opacity = '0.35';
         const dotStyle = members[i].visible
           ? `background:${c.border}`
           : `background:transparent;border:1px solid ${c.border}`;
@@ -912,7 +953,7 @@
         tab.innerHTML = `
           <span class="tab-dot" style="${dotStyle}"></span>
           <input class="tab-name" value="${dispName}" readonly maxlength="8"
-            onclick="if(${i}===activeMember){this.value=members[${i}].name;this.removeAttribute('readonly');this.select()}else{selectMember(${i})}"
+            onclick="if(!members[${i}].visible && ${i}===activeMember){showEnableToEdit();return;}if(${i}===activeMember && members[${i}].visible){this.value=members[${i}].name;this.removeAttribute('readonly');this.select()}else if(${i}!==activeMember){selectMember(${i})}"
             onblur="(function(el){var v=el.value.trim()||'Member ${i+1}';members[${i}].name=v;el.setAttribute('readonly','');renderTabs();updateChart();renderLegend();})(this)"
             onkeydown="if(event.key==='Enter'){this.blur()}"
             title="Click to rename"
@@ -975,9 +1016,9 @@
 
         let eyeBtn = '';
         if (pi === 0) {
-          eyeBtn = `<button class="section-eye-btn" onclick="toggleMindsets()" title="Toggle mindsets">${members[activeMember].visible ? eyeOpen : eyeClosed}</button>`;
+          eyeBtn = `<button class="section-eye-btn" id="eyeBtn0" onclick="toggleMindsets()">${members[activeMember].visible ? eyeOpen : eyeClosed}<span class="eye-tip">${members[activeMember].visible ? 'Hide member' : 'Show member'}</span></button>`;
         } else if (pi === 2) {
-          eyeBtn = `<button class="section-eye-btn" onclick="toggleCore()" title="Toggle core competencies">${members[activeMember].visible ? eyeOpen : eyeClosed}</button>`;
+          eyeBtn = `<button class="section-eye-btn" id="eyeBtn2" onclick="toggleCore()">${members[activeMember].visible ? eyeOpen : eyeClosed}<span class="eye-tip">${members[activeMember].visible ? 'Hide member' : 'Show member'}</span></button>`;
         }
 
         title.innerHTML = leftGroup + eyeBtn;
@@ -1043,6 +1084,19 @@
 
     // Attach passive:false touch listeners so preventDefault works on mobile
     attachSliderTouchGuards();
+
+    // Wire delayed tooltip on eye buttons
+    document.querySelectorAll('.section-eye-btn').forEach(btn => {
+      let tipTimer = null;
+      const tip = btn.querySelector('.eye-tip');
+      btn.addEventListener('mouseenter', () => {
+        tipTimer = setTimeout(() => tip && tip.classList.add('visible'), 1000);
+      });
+      btn.addEventListener('mouseleave', () => {
+        clearTimeout(tipTimer);
+        tip && tip.classList.remove('visible');
+      });
+    });
   }
 
   function attachSliderTouchGuards() {
@@ -1097,6 +1151,21 @@
         <span style="color:${nameColour}">${displayName}</span>
       </div>`;
     }).join('');
+  }
+
+  let _eyeCalloutTimer = null;
+  function showEnableToEdit() {
+    const callout = document.getElementById('eyeCallout');
+    const eyeBtn  = document.getElementById('eyeBtn0');
+    if (!callout || !eyeBtn) return;
+    const rect = eyeBtn.getBoundingClientRect();
+    callout.style.top  = (rect.top + rect.height / 2 - 13) + 'px';
+    callout.style.left = (rect.left - 152) + 'px';
+    callout.classList.remove('show');
+    void callout.offsetWidth;
+    callout.classList.add('show');
+    clearTimeout(_eyeCalloutTimer);
+    _eyeCalloutTimer = setTimeout(() => callout.classList.remove('show'), 2500);
   }
 
   function selectMember(i) {
@@ -1493,6 +1562,9 @@
     document.body.style.overflow = '';
   }
 </script>
+
+
+<div id="eyeCallout">Enable to edit</div>
 
 <!-- Notification Drawer -->
 <div class="notif-backdrop" id="notifBackdrop" onclick="closeDrawer()"></div>
