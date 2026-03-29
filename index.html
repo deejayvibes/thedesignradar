@@ -1201,12 +1201,94 @@
   function positionAfterPaint() {}
   window.addEventListener('resize', positionAbovePanel);
 
-  // ── Init ──
+  // ── Space label hover flash effects ──
+  // Axes: Hunter=0, Q1=1, Q4=2, Farmer=3, Q3=4, Q2=5
+  let solutionFlash = 0, problemFlash = 0, executionFlash = 0;
+
+  function makeFlashPlugin(id, getLine, flashRef) {
+    return {
+      id,
+      afterDraw(chart) {
+        const f = flashRef();
+        if (f <= 0) return;
+        const scale = chart.scales.r;
+        const cx = scale.xCenter, cy = scale.yCenter;
+        const cr = scale.getDistanceFromCenterForValue(12);
+        const total = axisLabels.length;
+        const angle = i => (2 * Math.PI * i / total) - Math.PI / 2;
+        const [a, b] = getLine();
+        const pA = { x: cx + Math.cos(angle(a)) * cr, y: cy + Math.sin(angle(a)) * cr };
+        const pB = { x: cx + Math.cos(angle(b)) * cr, y: cy + Math.sin(angle(b)) * cr };
+        const ctx2 = chart.ctx;
+        ctx2.save();
+        ctx2.beginPath();
+        ctx2.moveTo(pA.x, pA.y); ctx2.lineTo(cx, cy); ctx2.lineTo(pB.x, pB.y);
+        ctx2.strokeStyle = `rgba(127,255,178,${f * 0.9})`;
+        ctx2.lineWidth = 1; ctx2.lineCap = 'round';
+        ctx2.shadowColor = `rgba(127,255,178,${f * 0.6})`; ctx2.shadowBlur = 4 * f;
+        ctx2.stroke(); ctx2.restore();
+      }
+    };
+  }
+
+  function runFlash(rafRef, setFlash) {
+    cancelAnimationFrame(rafRef.v);
+    const t0 = performance.now();
+    function tick(now) {
+      const t = Math.min(1, (now - t0) / 900);
+      setFlash(t < 0.1 ? t / 0.1 : 1 - ((t - 0.1) / 0.9));
+      spiderChart.update('none');
+      if (t < 1) rafRef.v = requestAnimationFrame(tick);
+      else { setFlash(0); spiderChart.update('none'); }
+    }
+    rafRef.v = requestAnimationFrame(tick);
+  }
+
+  const _sRaf = {v:null}, _pRaf = {v:null}, _eRaf = {v:null};
+  Chart.register(makeFlashPlugin('solutionFlash',  () => [4, 0], () => solutionFlash));
+  Chart.register(makeFlashPlugin('problemFlash',   () => [2, 0], () => problemFlash));
+  Chart.register(makeFlashPlugin('executionFlash', () => [2, 4], () => executionFlash));
+
+  function triggerSpaceFlash(sel, rafRef, setFlash) {
+    runFlash(rafRef, setFlash);
+    flashLabel(sel);
+  }
+
+  document.querySelector('.top-left').addEventListener('mouseenter',
+    () => triggerSpaceFlash('.top-left', _sRaf, v => solutionFlash = v));
+  document.querySelector('.top-left').addEventListener('click',
+    () => triggerSpaceFlash('.top-left', _sRaf, v => solutionFlash = v));
+
+  document.querySelector('.top-right').addEventListener('mouseenter',
+    () => triggerSpaceFlash('.top-right', _pRaf, v => problemFlash = v));
+  document.querySelector('.top-right').addEventListener('click',
+    () => triggerSpaceFlash('.top-right', _pRaf, v => problemFlash = v));
+
+  document.querySelector('.chart-execution-label').addEventListener('mouseenter',
+    () => triggerSpaceFlash('.chart-execution-label', _eRaf, v => executionFlash = v));
+  document.querySelector('.chart-execution-label').addEventListener('click',
+    () => triggerSpaceFlash('.chart-execution-label', _eRaf, v => executionFlash = v));
+
+  function flashLabel(sel) {
+    const el = document.querySelector(sel);
+    if (!el) return;
+    el.style.transition = 'color 0.05s ease, text-shadow 0s';
+    el.style.color = 'rgba(127,255,178,0.9)';
+    el.style.textShadow = '0 0 8px rgba(127,255,178,0.6)';
+    setTimeout(() => {
+      el.style.transition = 'color 0.8s ease, text-shadow 0.8s ease';
+      el.style.color = '';
+      el.style.textShadow = '';
+    }, 150);
+  }
+  ['.top-left', '.top-right', '.chart-execution-label'].forEach(sel => {
+    const el = document.querySelector(sel);
+    if (el) { el.style.pointerEvents = 'all'; el.style.cursor = 'pointer'; }
+  });
+
   renderTabs(); renderPanel(); updateChart(); renderLegend();
   setTimeout(drawExtensionLines, 300);
   positionAfterPaint();
-
-  // ── Notification Drawer ──
   const notifications = [
     {
       heading: 'About',
