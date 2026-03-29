@@ -896,6 +896,12 @@
     panelOrder.forEach((ai, pi) => {
       // Inject section title if needed
       if (sectionBreaks[pi] !== undefined) {
+        // Add a light divider above // Mindsets
+        if (pi === 0) {
+          const hr = document.createElement('div');
+          hr.style.cssText = 'width:100%;height:1px;background:var(--border);margin:0.5rem 0 1.5rem';
+          panel.appendChild(hr);
+        }
         const title = document.createElement('div');
         title.className = 'panel-title';
         title.style.color = c.border;
