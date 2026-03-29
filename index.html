@@ -933,15 +933,6 @@
                 var thumbX=rect.left + thumbR + ratio*(trackW - thumbR*2);
                 if(Math.abs(e.clientX - thumbX) > thumbR + 4){ e.preventDefault(); }
               })(event)"
-            ontouchstart="
-              (function(e){
-                var rect=e.target.getBoundingClientRect();
-                var trackW=rect.width, thumbR=9;
-                var ratio=e.target.value/12;
-                var thumbX=rect.left + thumbR + ratio*(trackW - thumbR*2);
-                var tx=e.touches[0].clientX;
-                if(Math.abs(tx - thumbX) > thumbR + 4){ e.preventDefault(); e.stopPropagation(); return false; }
-              })(event)"
             oninput="members[${activeMember}].values[${ai}]=+this.value;updateThumbLabel(${ai},+this.value);updateChart(false)"/>
           <span id="val-${ai}" style="
             position:absolute;
@@ -966,6 +957,36 @@
         </div>
       `;
       panel.appendChild(row);
+    });
+
+    // Attach passive:false touch listeners so preventDefault works on mobile
+    attachSliderTouchGuards();
+  }
+
+  function attachSliderTouchGuards() {
+    document.querySelectorAll('input[type="range"][data-ai]').forEach(slider => {
+      // Remove any previous listener by cloning (avoids duplicates)
+      const fresh = slider.cloneNode(true);
+      // Re-attach the oninput since cloneNode drops it
+      const ai = parseInt(fresh.getAttribute('data-ai'));
+      fresh.addEventListener('input', () => {
+        members[activeMember].values[ai] = +fresh.value;
+        updateThumbLabel(ai, +fresh.value);
+        updateChart(false);
+      });
+      fresh.addEventListener('touchstart', e => {
+        const rect   = fresh.getBoundingClientRect();
+        const trackW = rect.width;
+        const thumbR = 9;
+        const ratio  = fresh.value / 12;
+        const thumbX = rect.left + thumbR + ratio * (trackW - thumbR * 2);
+        const tx     = e.touches[0].clientX;
+        if (Math.abs(tx - thumbX) > thumbR + 6) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, { passive: false });
+      slider.parentNode.replaceChild(fresh, slider);
     });
   }
 
