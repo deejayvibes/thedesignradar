@@ -775,7 +775,11 @@
   }
 
   function updateChart(animate = true) {
-    spiderChart.data.datasets = members.map((mem, i) => {
+    // Render oldest first, newest last — newest always on top
+    const order = members.map((_, i) => i).reverse();
+
+    spiderChart.data.datasets = order.map(i => {
+      const mem = members[i];
       const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
       const bg     = opaqueMode ? 'rgba(30,33,48,0.92)' : c.bg;
       const border = opaqueMode ? 'rgba(0,0,0,0)'       : c.border;
