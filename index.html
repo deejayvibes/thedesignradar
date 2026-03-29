@@ -1155,7 +1155,7 @@
     const totalLegendW=legendItems.length ? itemWidths.reduce((a,b)=>a+b,0)+(legendItems.length-1)*itemGap : 0;
     const legendH = showLegend ? 24+16 : 0;
     const totalW=chartW+PAD*2;
-    const watermarkH = Math.max(28, Math.round(totalW * 0.04));
+    const watermarkH = Math.max(40, Math.round(totalW * 0.05));
     const totalH=chartH+PAD*2+legendH+watermarkH;
     const off=document.createElement('canvas');
     off.width=totalW*dpr; off.height=totalH*dpr;
@@ -1175,14 +1175,19 @@
       });
     }
 
-    // Watermark — font scales with canvas width, always readable
-    const wmFontSize = Math.max(10, Math.round(totalW * 0.018));
+    // Watermark — auto-fit font size so text never gets clipped
     const wmText = `The Deejay Graph © 2020–${new Date().getFullYear()} by Dhaneesh Jameson is licensed under CC BY-NC 4.0`;
-    const wmY = totalH - watermarkH / 2;
-    octx.font = `400 ${wmFontSize}px monospace`;
-    octx.fillStyle = 'rgba(255,255,255,0.35)';
+    let wmFontSize = Math.max(10, Math.round(totalW * 0.018));
     octx.textBaseline = 'middle';
     octx.textAlign = 'center';
+    // Shrink font until text fits within canvas with 16px padding each side
+    octx.font = `400 ${wmFontSize}px monospace`;
+    while (octx.measureText(wmText).width > totalW - 32 && wmFontSize > 8) {
+      wmFontSize--;
+      octx.font = `400 ${wmFontSize}px monospace`;
+    }
+    const wmY = totalH - watermarkH / 2;
+    octx.fillStyle = 'rgba(255,255,255,0.35)';
     octx.fillText(wmText, totalW / 2, wmY);
 
     // On mobile with Web Share API support — share the image
