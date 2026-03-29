@@ -159,6 +159,10 @@
     }
     .notif-drawer.open { transform: translateX(0); }
 
+    @media (max-width: 999px) {
+      .notif-drawer { width: min(360px, 85vw); }
+    }
+
     .notif-backdrop {
       position: fixed;
       inset: 0;
@@ -1257,12 +1261,14 @@
   function openDrawer() {
     document.getElementById('notifDrawer').classList.add('open');
     document.getElementById('notifBackdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
     buildAccordion();
   }
 
   function closeDrawer() {
     document.getElementById('notifDrawer').classList.remove('open');
     document.getElementById('notifBackdrop').classList.remove('open');
+    document.body.style.overflow = '';
   }
 </script>
 
