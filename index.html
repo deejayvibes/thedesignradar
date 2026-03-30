@@ -531,6 +531,7 @@
       background: none; border: none; color: var(--muted);
       cursor: pointer; font-size: 0.75rem; line-height: 1;
       padding: 0; opacity: 0; transition: opacity 0.15s;
+      margin-left: 0.4rem;
     }
     .member-tab:hover .tab-remove,
     .member-tab.active .tab-remove { opacity: 1; }
@@ -1435,6 +1436,7 @@
     e.stopPropagation();
     if (members.length <= 1) return;
     if (!members[i].visible) return;
+    if (window.innerWidth <= 999 && i !== activeMember) return;
 
     const isPerfect = members[i].values.every(v => v === 6);
 
