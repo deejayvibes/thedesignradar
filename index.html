@@ -369,6 +369,12 @@
       height: 100%;
     }
 
+    input[type="range"] { cursor: default; }
+    input[type="range"]::-webkit-slider-thumb { cursor: grab; }
+    input[type="range"]::-webkit-slider-thumb:active { cursor: grabbing; }
+    input[type="range"]::-moz-range-thumb { cursor: grab; }
+    input[type="range"]::-moz-range-thumb:active { cursor: grabbing; }
+
     .panel-title {
       font-size: 0.6rem;
       font-family: var(--font-mono);
@@ -425,7 +431,17 @@
       pointer-events: none;
       transition: opacity 0.15s;
     }
-    #deleteBin.show { opacity: 1; pointer-events: all; transition: opacity 0.4s ease; }
+    @keyframes binPop {
+      0%   { transform: translateY(12px); opacity: 0; }
+      70%  { transform: translateY(-4px); opacity: 1; }
+      100% { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes binHide {
+      0%   { transform: translateY(0);    opacity: 1; }
+      100% { transform: translateY(12px); opacity: 0; }
+    }
+    #deleteBin.show { opacity: 1; pointer-events: all; animation: binPop 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    #deleteBin.hide { opacity: 0; pointer-events: none; animation: binHide 0.3s ease-out forwards; }
     #deleteBin svg.bin-icon { position: relative; z-index: 1; }
     #deleteBin .countdown-ring {
       position: absolute;
@@ -436,7 +452,7 @@
     #deleteBin .countdown-ring circle {
       fill: none;
       stroke: rgba(255,255,255,0.08);
-      stroke-width: 2;
+      stroke-width: 1;
       r: 18; cx: 20; cy: 20;
     }
     #deleteBin .countdown-ring .track {
@@ -444,10 +460,11 @@
       stroke-dasharray: 113;
       stroke-dashoffset: 0;
       stroke-linecap: round;
+      stroke-width: 1;
       transition: none;
     }
     #deleteBin.show .countdown-ring .track {
-      animation: countdown 2s linear forwards;
+      animation: none;
     }
     @keyframes countdown {
       from { stroke-dashoffset: 0; }
@@ -1265,15 +1282,16 @@
 
   function attachSliderTouchGuards() {
     document.querySelectorAll('input[type="range"][data-ai]').forEach(slider => {
-      // Remove any previous listener by cloning (avoids duplicates)
       const fresh = slider.cloneNode(true);
-      // Re-attach the oninput since cloneNode drops it
       const ai = parseInt(fresh.getAttribute('data-ai'));
+      let touchOnThumb = false;
+
       fresh.addEventListener('input', () => {
         members[activeMember].values[ai] = +fresh.value;
         updateThumbLabel(ai, +fresh.value);
         updateChart(false);
       });
+
       fresh.addEventListener('touchstart', e => {
         const rect   = fresh.getBoundingClientRect();
         const trackW = rect.width;
@@ -1281,11 +1299,22 @@
         const ratio  = fresh.value / 12;
         const thumbX = rect.left + thumbR + ratio * (trackW - thumbR * 2);
         const tx     = e.touches[0].clientX;
-        if (Math.abs(tx - thumbX) > thumbR + 6) {
+        touchOnThumb = Math.abs(tx - thumbX) <= thumbR + 4;
+        if (!touchOnThumb) {
           e.preventDefault();
           e.stopPropagation();
         }
       }, { passive: false });
+
+      fresh.addEventListener('touchmove', e => {
+        if (!touchOnThumb) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, { passive: false });
+
+      fresh.addEventListener('touchend', () => { touchOnThumb = false; });
+
       slider.parentNode.replaceChild(fresh, slider);
     });
   }
@@ -1469,7 +1498,7 @@
       _deletePendingIdx = i;
 
       bin.style.left = (rect.left + rect.width / 2 - 20) + 'px';
-      bin.style.top  = (rect.top - 64 - 20) + 'px'; // 64px above capsule centre
+      bin.style.top  = (rect.top - 48 - 20) + 'px'; // 48px above capsule centre
       bin.classList.remove('show');
       void bin.offsetWidth; // reflow to restart animation
       bin.classList.add('show');
@@ -1477,7 +1506,11 @@
       clearTimeout(_deleteBinTimer);
       _deleteBinTimer = setTimeout(() => {
         bin.classList.remove('show');
-        _deletePendingIdx = null;
+        bin.classList.add('hide');
+        setTimeout(() => {
+          bin.classList.remove('hide');
+          _deletePendingIdx = null;
+        }, 300);
       }, 2000);
     }
   }
