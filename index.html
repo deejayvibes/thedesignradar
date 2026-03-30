@@ -171,7 +171,7 @@
       transition: color 0.2s, border-color 0.2s;
     }
     .btn-download-icon:hover { color: var(--accent); border-color: var(--accent); }
-    .dl-tip {
+    .dl-tip { z-index: 26;
       position: absolute;
       right: calc(100% + 8px);
       top: 50%;
@@ -189,7 +189,7 @@
       opacity: 0;
       transition: opacity 0.15s;
     }
-    .btn-download-icon:hover .dl-tip { opacity: 1; transition-delay: 0.8s; }
+    .btn-download-icon:hover .dl-tip { z-index: 26; opacity: 1; transition-delay: 0.8s; }
 
     .toggle-tip {
       position: absolute;
@@ -208,8 +208,8 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.15s;
+      z-index: 26;
     }
-    .opaque-toggle:hover ~ .toggle-tip,
     div:hover > .toggle-tip { opacity: 1; transition-delay: 0.8s; }
 
     /* ── NOTIFICATION DRAWER ── */
@@ -434,9 +434,31 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.15s;
-      z-index: 100;
+      z-index: 26;
     }
     .section-eye-btn .eye-tip.visible { opacity: 1; }
+
+    .member-tab { position: relative; }
+    .member-tab .tab-tip {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: calc(100% + 6px);
+      background: #1e2130;
+      border: 1px solid #2e3250;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 26;
+    }
+    .member-tab:hover .tab-tip { opacity: 1; }
 
     /* Enable to edit callout */
     #deleteBin {
@@ -1198,15 +1220,15 @@
         const dotStyle = members[i].visible
           ? `background:${c.border}`
           : `background:transparent;border:1px solid ${c.border}`;
-        const dispName = mem.name.length > 6 ? mem.name.slice(0, 6) + '…' : mem.name;
+        const dispName = mem.name.length > 8 ? mem.name.slice(0, 8) + '...' : mem.name;
         tab.innerHTML = `
           <span class="tab-dot" style="${dotStyle}"></span>
-          <input class="tab-name" value="${dispName}" readonly maxlength="8"
+          <input class="tab-name" value="${dispName}" readonly maxlength="11"
             onclick="if(!members[${i}].visible){if(${i}!==activeMember){selectMember(${i});}else{showEnableToEdit();}return;}if(${i}!==activeMember){selectMember(${i})}"
             ondblclick="if(${i}===activeMember && members[${i}].visible && window.innerWidth>999){this.placeholder=members[${i}].name;this.value='';this.removeAttribute('readonly');this.setSelectionRange(0,0);this.focus()}"
             onblur="(function(el){var v=el.value.trim()||el.placeholder||'Memb-A';members[${i}].name=v;el.placeholder='';el.setAttribute('readonly','');renderTabs();updateChart();renderLegend();})(this)"
             onkeydown="if(event.key==='Enter'){this.blur()}"
-            title="Double-click to rename"
+            title=""
           />
           ${members.length > 1 && members[i].visible ? `<button class="tab-remove" onclick="removeMember(${i},event)">×</button>` : ''}
         `;
@@ -1427,11 +1449,10 @@
       if (!mem.visible) return '';
       const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
       const nameColour = opaqueMode ? 'var(--muted)' : c.border;
-      const displayName = mem.name.length > 6 ? mem.name.slice(0, 6) + '...' : mem.name;
+      const displayName = mem.name.length > 8 ? mem.name.slice(0, 8) + '...' : mem.name;
       return `<div class="legend-item" data-member="${i}"
         style="cursor:default"
-        onmouseenter="flashMemberOutline(${i});if(this.querySelector('span').style.color==='var(--muted)'||this.querySelector('span').style.color===''){this.querySelector('span').style.color='${c.border}'}"
-        onmouseleave="if(${opaqueMode}){this.querySelector('span').style.color='var(--muted)'}">
+        onmouseenter="flashMemberOutline(${i});if(${opaqueMode}){var s=this.querySelector('span');s.style.transition='color 0.05s';s.style.color='${c.border}';setTimeout(()=>{s.style.transition='color 0.8s';s.style.color='var(--muted)'},150)}">
         <span style="color:${nameColour};transition:color 0.2s">${displayName}</span>
       </div>`;
     }).join('');
@@ -1756,7 +1777,7 @@
     // In team view (opaqueMode): names only in muted colour, no swatch
     // In normal view: coloured name, no swatch (matches screen which has no swatch line)
     const legendItems = visibleMembers.map(m => ({
-      name: m.name.length > 6 ? m.name.slice(0,6) + '...' : m.name,
+      name: m.name.length > 8 ? m.name.slice(0,8) + '...' : m.name,
       color: opaqueMode ? '#555b7a' : MEMBER_COLOURS[m.i % MEMBER_COLOURS.length].border,
       showSwatch: false,
     }));
@@ -1966,7 +1987,7 @@
     },
     {
       heading: 'Renaming member tags',
-      body: "Double-click (or long-press) on any 'member' tag to rename it."
+      body: "Double-tap (or long-press) on any 'member' tag to rename it."
     },
     {
       heading: 'Relevance in the AI era',
