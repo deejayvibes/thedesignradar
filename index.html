@@ -527,6 +527,19 @@
     }
     .member-tab.active .tab-name { cursor: text; }
 
+    .member-tab-skeleton {
+      display: inline-flex;
+      align-items: center;
+      height: 28px;
+      border-radius: 100px;
+      background: rgba(255,255,255,0.08);
+      opacity: 1;
+      transition: opacity 0.4s ease-out;
+      pointer-events: none;
+      flex-shrink: 0;
+    }
+    .member-tab-skeleton.fade { opacity: 0; }
+
     .member-tab .tab-remove {
       background: none; border: none; color: var(--muted);
       cursor: pointer; font-size: 0.75rem; line-height: 1;
@@ -766,6 +779,11 @@
       .btn-download-icon {
         margin-right: 0;
         border-radius: 50%;
+      }
+
+      #memberTabsDesktop {
+        max-height: none;
+        overflow: visible;
       }
 
       header { padding: 1rem 1.25rem; }
@@ -1474,9 +1492,30 @@
   }
 
   function _doDelete(i) {
-    members.splice(i, 1);
-    activeMember = Math.min(activeMember, members.length - 1);
-    renderTabs(); renderPanel(); updateChart(); renderLegend();
+    // Find the capsule element in both tab containers and replace with skeleton
+    ['memberTabsDesktop', 'memberTabs'].forEach(containerId => {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const tabs = container.querySelectorAll('.member-tab');
+      if (tabs[i]) {
+        const tab = tabs[i];
+        const skeleton = document.createElement('div');
+        skeleton.className = 'member-tab-skeleton';
+        skeleton.style.width = tab.getBoundingClientRect().width + 'px';
+        tab.replaceWith(skeleton);
+        // Trigger fade-out
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => skeleton.classList.add('fade'));
+        });
+      }
+    });
+
+    // Delete after animation completes
+    setTimeout(() => {
+      members.splice(i, 1);
+      activeMember = Math.min(activeMember, members.length - 1);
+      renderTabs(); renderPanel(); updateChart(); renderLegend();
+    }, 400);
   }
 
   // ── Drag on chart — node-only, axis-projected, integer steps ──
