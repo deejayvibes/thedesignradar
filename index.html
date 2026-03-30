@@ -1052,7 +1052,7 @@
     data: { labels: axisLabels, datasets: [] },
     options: {
       responsive: true, maintainAspectRatio: true,
-      animation: { duration: 250, easing: 'easeInOutQuart' },
+      animation: false,
       plugins: {
         legend: { display: false },
         tooltip: {
@@ -1136,7 +1136,7 @@
         pointHoverRadius: isHidden || opaqueMode ? 0 : 8,
       };
     });
-    spiderChart.options.animation = animate ? { duration: 250, easing: 'easeInOutQuart' } : false;
+    spiderChart.options.animation = false;
     spiderChart.update(animate ? undefined : 'none');
     drawExtensionLines();
   }
@@ -1224,7 +1224,7 @@
         tab.innerHTML = `
           <span class="tab-dot" style="${dotStyle}"></span>
           <input class="tab-name" value="${dispName}" readonly maxlength="11"
-            onclick="if(!members[${i}].visible){if(${i}!==activeMember){selectMember(${i});}else{showEnableToEdit();}return;}if(${i}!==activeMember){selectMember(${i})}"
+            onclick="if(!members[${i}].visible){if(${i}!==activeMember){selectMemberQuiet(${i});}else{showEnableToEdit();}return;}if(${i}!==activeMember){selectMemberQuiet(${i});}"
             ondblclick="if(${i}===activeMember && members[${i}].visible && window.innerWidth>999){this.placeholder=members[${i}].name;this.value='';this.removeAttribute('readonly');this.setSelectionRange(0,0);this.focus()}"
             onblur="(function(el){var v=el.value.trim()||el.placeholder||'Memb-A';members[${i}].name=v;el.placeholder='';el.setAttribute('readonly','');renderTabs();updateChart();renderLegend();})(this)"
             onkeydown="if(event.key==='Enter'){this.blur()}"
@@ -1451,7 +1451,8 @@
       const nameColour = opaqueMode ? 'var(--muted)' : c.border;
       const displayName = mem.name.length > 8 ? mem.name.slice(0, 8) + '...' : mem.name;
       return `<div class="legend-item" data-member="${i}"
-        style="cursor:default"
+        style="cursor:pointer"
+        onclick="selectMemberQuiet(${i})"
         onmouseenter="flashMemberOutline(${i});if(${opaqueMode}){var s=this.querySelector('span');s.style.transition='color 0.05s';s.style.color='${c.border}';setTimeout(()=>{s.style.transition='color 0.8s';s.style.color='var(--muted)'},150)}">
         <span style="color:${nameColour};transition:color 0.2s">${displayName}</span>
       </div>`;
@@ -1548,6 +1549,30 @@
   function selectMember(i) {
     activeMember = i;
     renderTabs(); renderPanel(); updateChart(); renderLegend();
+    positionAfterPaint();
+  }
+
+  function selectMemberQuiet(i) {
+    if (i === activeMember) return;
+    activeMember = i;
+    // Update tab active styles — guard against duplicate containers
+    let tabIdx = 0;
+    document.querySelectorAll('.member-tab').forEach(tab => {
+      const mi = parseInt(tab.querySelector('input')?.getAttribute('onclick')?.match(/\d+/)?.[0] ?? tabIdx);
+      if (mi >= members.length) return;
+      const c = MEMBER_COLOURS[mi % MEMBER_COLOURS.length];
+      tab.classList.toggle('active', mi === i);
+      tab.style.borderColor = mi === i ? c.border : 'transparent';
+      tab.style.opacity = !members[mi].visible ? '0.35' : '';
+      tabIdx++;
+    });
+    // Disable metric-row entry animations during swap
+    const style = document.createElement('style');
+    style.textContent = '.metric-row { animation: none !important; }';
+    document.head.appendChild(style);
+    renderPanel();
+    renderLegend();
+    requestAnimationFrame(() => style.remove());
     positionAfterPaint();
   }
 
