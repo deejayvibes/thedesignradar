@@ -31,6 +31,7 @@
       display: grid;
       grid-template-rows: auto 1fr;
       overflow-x: hidden;
+      overflow-anchor: none;
     }
 
     body::before {
@@ -359,6 +360,7 @@
       border-right: 1px solid var(--border);
       padding: 1.25rem 1.5rem;
       overflow-y: auto;
+      overflow-anchor: none;
       display: flex;
       flex-direction: column;
       gap: 0;
@@ -952,15 +954,29 @@
 
   let opaqueMode = false;
 
-  function toggleMindsets() {
+  function _toggleVisibility() {
     members[activeMember].visible = !members[activeMember].visible;
     renderTabs(); renderPanel(); updateChart(false); renderLegend();
+    // Re-lock height if member became visible (might have grown)
+    if (window.innerWidth <= 999) lockPanelHeight();
   }
 
-  function toggleCore() {
-    members[activeMember].visible = !members[activeMember].visible;
-    renderTabs(); renderPanel(); updateChart(false); renderLegend();
+  function lockPanelHeight() {
+    if (window.innerWidth > 999) return;
+    // Only lock when all members are visible (full height state)
+    if (!members.every(m => m.visible)) return;
+    requestAnimationFrame(() => {
+      const mp = document.getElementById('metricsPanel');
+      if (!mp) return;
+      mp.style.minHeight = '';
+      requestAnimationFrame(() => {
+        mp.style.minHeight = mp.scrollHeight + 'px';
+      });
+    });
   }
+
+  function toggleMindsets() { _toggleVisibility(); }
+  function toggleCore()     { _toggleVisibility(); }
 
   function toggleOpaque() {
     opaqueMode = !opaqueMode;
@@ -1762,6 +1778,7 @@
   renderTabs(); renderPanel(); updateChart(); renderLegend();
   setTimeout(drawExtensionLines, 300);
   positionAfterPaint();
+  lockPanelHeight();
   const notifications = [
     {
       heading: 'About',
