@@ -1434,65 +1434,60 @@
   }
 
   function attachSliderTouchGuards() {
+    if (window.innerWidth > 999) return; // desktop only uses mouse, no guards needed
+
     document.querySelectorAll('input[type="range"][data-ai]').forEach(slider => {
-      const fresh = slider.cloneNode(true);
-      const ai = parseInt(fresh.getAttribute('data-ai'));
-      let touchOnThumb = false;
+      const ai = parseInt(slider.getAttribute('data-ai'));
+
+      // Create a transparent overlay that sits on top of the native slider
+      // This intercepts ALL touches, letting us decide what to do
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:absolute;inset:0;z-index:2;touch-action:none;cursor:default;';
+
+      let dragging = false;
       let startX = null;
       let startVal = null;
 
-      fresh.addEventListener('input', () => {
-        if (!touchOnThumb) return; // block input events from non-thumb touches
-        members[activeMember].values[ai] = +fresh.value;
-        updateThumbLabel(ai, +fresh.value);
-        updateChart(false);
-      });
-
-      fresh.addEventListener('touchstart', e => {
-        const rect   = fresh.getBoundingClientRect();
+      overlay.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const rect   = slider.getBoundingClientRect();
         const thumbR = 9;
-        const ratio  = fresh.value / 12;
+        const ratio  = slider.value / 12;
         const thumbX = rect.left + thumbR + ratio * (rect.width - thumbR * 2);
         const tx     = e.touches[0].clientX;
-        touchOnThumb = Math.abs(tx - thumbX) <= thumbR + 8;
-        if (!touchOnThumb) {
-          e.preventDefault();
-          e.stopPropagation();
-          return;
+        if (Math.abs(tx - thumbX) <= thumbR + 10) {
+          dragging = true;
+          startX   = tx;
+          startVal = +slider.value;
         }
-        startX = tx;
-        startVal = +fresh.value;
       }, { passive: false });
 
-      fresh.addEventListener('touchmove', e => {
-        if (!touchOnThumb) {
-          e.preventDefault();
-          e.stopPropagation();
-          return;
-        }
-        // Manual value calculation from drag distance
+      overlay.addEventListener('touchmove', e => {
         e.preventDefault();
-        const rect  = fresh.getBoundingClientRect();
+        if (!dragging) return;
+        const rect   = slider.getBoundingClientRect();
         const thumbR = 9;
         const trackW = rect.width - thumbR * 2;
-        const dx = e.touches[0].clientX - startX;
-        const dVal = (dx / trackW) * 12;
-        const newVal = Math.round(Math.max(0, Math.min(12, startVal + dVal)));
-        if (newVal !== +fresh.value) {
-          fresh.value = newVal;
+        const dx     = e.touches[0].clientX - startX;
+        const newVal = Math.round(Math.max(0, Math.min(12, startVal + (dx / trackW) * 12)));
+        if (newVal !== +slider.value) {
+          slider.value = newVal;
           members[activeMember].values[ai] = newVal;
           updateThumbLabel(ai, newVal);
           updateChart(false);
         }
       }, { passive: false });
 
-      fresh.addEventListener('touchend', () => {
-        touchOnThumb = false;
-        startX = null;
+      overlay.addEventListener('touchend', () => {
+        dragging = false;
+        startX   = null;
         startVal = null;
       });
 
-      slider.parentNode.replaceChild(fresh, slider);
+      // Insert overlay inside the slider's parent wrapper
+      const wrapper = slider.parentNode;
+      wrapper.style.position = 'relative';
+      wrapper.appendChild(overlay);
     });
   }
 
