@@ -350,25 +350,29 @@
 
     .carousel-tabs {
       display: flex; gap: 0.4rem; margin-bottom: 0.9rem;
+      flex-wrap: wrap;
     }
     .carousel-tab {
-      padding: 0.5rem 1.2rem;
-      border-radius: 4px;
-      border: 1px solid var(--border);
+      padding: 0.25rem 0;
+      border-radius: 0;
+      border: none;
+      border-bottom: 1px solid transparent;
       background: transparent;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-size: 0.72rem;
       letter-spacing: 0.08em;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      transition: color 0.15s, border-color 0.15s;
+      margin-right: 0.6rem;
     }
     .carousel-tab.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #000;
-      font-weight: 700;
+      background: transparent;
+      border-bottom: 1px solid var(--accent);
+      color: var(--accent);
+      font-weight: 600;
     }
+    .carousel-tab:hover:not(.active) { color: var(--text); }
     .carousel-slide { display: none; }
     .carousel-slide.active { display: block; }
     .carousel-slide-title {
@@ -716,19 +720,23 @@
     input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: var(--border); }
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
-      width: 18px; height: 18px; border-radius: 50%;
+      width: 12px; height: 18px; border-radius: 2px;
       background: var(--thumb-color, var(--accent));
-      box-shadow: 0 0 2px var(--thumb-color, var(--accent));
-      transition: background 0.15s, box-shadow 0.15s;
+      box-shadow:
+        inset 1px 1px 0 rgba(255,255,255,0.3),
+        inset -1px -1px 0 rgba(0,0,0,0.25),
+        0 2px 4px rgba(0,0,0,0.4);
+      transition: box-shadow 0.15s;
       margin-top: -8px; cursor: grab;
     }
-    input[type="range"]:active::-webkit-slider-thumb  { cursor: grabbing; background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); transform: scale(1.2); }
-    input[type="range"]::-webkit-slider-thumb:hover   { background: #fff; box-shadow: 0 0 4px rgba(255,255,255,0.4); transform: scale(1.2); }
+    input[type="range"]:active::-webkit-slider-thumb { cursor: grabbing; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.15), inset -1px -1px 0 rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.4); }
+    input[type="range"]::-webkit-slider-thumb:hover  { box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.45); }
     input[type="range"]::-moz-range-track { height: 2px; background: var(--border); border: none; }
     input[type="range"]::-moz-range-thumb {
-      width: 18px; height: 18px; border-radius: 50%; border: none;
+      width: 12px; height: 18px; border-radius: 2px; border: none;
       background: var(--thumb-color, var(--accent));
-      box-shadow: 0 0 2px var(--thumb-color, var(--accent)); cursor: grab;
+      box-shadow: inset 1px 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0 rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.4);
+      cursor: grab;
     }
 
     .panel-footer {
@@ -1428,7 +1436,7 @@
             onmousedown="
               (function(e){
                 var rect=e.target.getBoundingClientRect();
-                var trackW=rect.width, thumbR=9;
+                var trackW=rect.width, thumbR=6;
                 var ratio=e.target.value/12;
                 var thumbX=rect.left + thumbR + ratio*(trackW - thumbR*2);
                 if(Math.abs(e.clientX - thumbX) > thumbR + 4){ e.preventDefault(); }
@@ -1436,7 +1444,7 @@
             oninput="members[${activeMember}].values[${ai}]=+this.value;updateThumbLabel(${ai},+this.value);updateChart(false)"/>
           <span id="val-${ai}" style="
             position:absolute;
-            top:-18px;
+            top:-22px;
             left:calc(${(val/12)*100}% + ${9 - (val/12)*18}px);
             transform:translateX(-50%);
             font-family:'DM Mono',monospace;
@@ -1497,7 +1505,7 @@
       overlay.addEventListener('touchstart', e => {
         e.preventDefault();
         const rect   = slider.getBoundingClientRect();
-        const thumbR = 9;
+        const thumbR = 6;
         const ratio  = slider.value / 12;
         const thumbX = rect.left + thumbR + ratio * (rect.width - thumbR * 2);
         const tx     = e.touches[0].clientX;
@@ -1512,7 +1520,7 @@
         e.preventDefault();
         if (!dragging) return;
         const rect   = slider.getBoundingClientRect();
-        const thumbR = 9;
+        const thumbR = 6;
         const trackW = rect.width - thumbR * 2;
         const dx     = e.touches[0].clientX - startX;
         const newVal = Math.round(Math.max(0, Math.min(12, startVal + (dx / trackW) * 12)));
@@ -2280,6 +2288,16 @@
       body: "The Deejay-Graph maps a product team's collective strengths across four core competencies and two mindsets, essential for navigating the problem, solution and execution spaces of designing and building digital products."
     },
     {
+      heading: 'Quick Start Guide',
+      hideCarouselTitle: true,
+      carousel: [
+        { label: 'Plotting', title: 'Plotting', body: 'You can add up to 6 members here. Select each member\'s tags separately to adjust each of their parameters across 4 competencies and 2 mindsets.' },
+        { label: 'Customisation', title: 'Customisation', body: 'You can also adjust the parameters of a selected member by grabbing the corners of the graph directly; Do rename the member tags by double-tapping, delete them or simply toggle the visibility as needed.' },
+        { label: 'Merged View', title: 'Merged View', body: 'Toggle to view collective team strength by merging the individual graphs into a single block.' },
+        { label: 'Segment Analysis', title: 'Segment Analysis', body: "Select category labels near the graph to get a glimpse of team strength distribution within the 'Problem space, Solution space, or Execution space." },
+      ]
+    },
+    {
       heading: 'The Philosophy',
       body: "This framework aims to provide a transparent mirror for setting the right expectations of a team's current capacity. Based on foundational human competencies and attitudes, it is grounded in the belief that our greatest potential is unlocked through how we complement each other, creating the space to build a more resilient and harmonious whole.",
       footer: '<a href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-size:0.78rem;">Read more.</a>'
@@ -2334,7 +2352,12 @@
         ).join('');
         contentHtml = `<div class="carousel-tabs" id="${cid}">${tabs}</div>${slides}${n.footer ? `<p style="margin:1rem 0 0;line-height:1.6">${n.footer}</p>` : ''}`;
       } else if (n.bullets) {
-        contentHtml = n.bullets.map(b => `<div class="accordion-bullet"><span class="accordion-bullet-dot"></span>${b}</div>`).join('');
+        contentHtml = n.bullets.map(b => {
+          const hasBlockSpan = b.includes('display:block');
+          return hasBlockSpan
+            ? `<div class="accordion-bullet" style="flex-direction:column;align-items:flex-start;gap:0">${b}</div>`
+            : `<div class="accordion-bullet"><span class="accordion-bullet-dot"></span>${b}</div>`;
+        }).join('');
       } else {
         contentHtml = `<p class="accordion-text">${n.body}</p>${n.footer ? `<p style="margin:1rem 0 0;line-height:1.6">${n.footer}</p>` : ''}`;
       }
