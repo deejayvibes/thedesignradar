@@ -349,7 +349,7 @@
     }
 
     .carousel-tabs {
-      display: flex; gap: 0.4rem; margin-bottom: 0.9rem;
+      display: flex; gap: 0.8rem; margin-bottom: 0.9rem;
       flex-wrap: wrap;
     }
     .carousel-tab {
@@ -720,7 +720,7 @@
     input[type="range"]::-webkit-slider-runnable-track { height: 2px; background: var(--border); }
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
-      width: 12px; height: 18px; border-radius: 2px;
+      width: 10px; height: 18px; border-radius: 2px;
       background: var(--thumb-color, var(--accent));
       box-shadow:
         inset 1px 1px 0 rgba(255,255,255,0.3),
@@ -733,7 +733,7 @@
     input[type="range"]::-webkit-slider-thumb:hover  { box-shadow: inset 1px 1px 0 rgba(255,255,255,0.4), inset -1px -1px 0 rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.45); }
     input[type="range"]::-moz-range-track { height: 2px; background: var(--border); border: none; }
     input[type="range"]::-moz-range-thumb {
-      width: 12px; height: 18px; border-radius: 2px; border: none;
+      width: 10px; height: 18px; border-radius: 2px; border: none;
       background: var(--thumb-color, var(--accent));
       box-shadow: inset 1px 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0 rgba(0,0,0,0.25), 0 2px 4px rgba(0,0,0,0.4);
       cursor: grab;
@@ -893,7 +893,7 @@
         max-height: none;
         overflow-y: visible;
         border-radius: 0;
-        padding-bottom: 1.5rem;
+        padding-bottom: calc(1.5rem + 48px);
       }
 
       /* Bottom bar back to normal flow on mobile too */
@@ -1496,7 +1496,7 @@
       // Create a transparent overlay that sits on top of the native slider
       // This intercepts ALL touches, letting us decide what to do
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:absolute;inset:0;z-index:2;touch-action:none;cursor:default;';
+      overlay.style.cssText = 'position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);height:40px;z-index:2;touch-action:none;cursor:default;';
 
       let dragging = false;
       let startX = null;
@@ -1509,7 +1509,7 @@
         const ratio  = slider.value / 12;
         const thumbX = rect.left + thumbR + ratio * (rect.width - thumbR * 2);
         const tx     = e.touches[0].clientX;
-        if (Math.abs(tx - thumbX) <= thumbR + 10) {
+        if (Math.abs(tx - thumbX) <= thumbR + 14) {
           dragging = true;
           startX   = tx;
           startVal = +slider.value;
@@ -2285,41 +2285,31 @@
   const notifications = [
     {
       heading: 'About',
-      body: "The Deejay-Graph maps a product team's collective strengths across four core competencies and two mindsets, essential for navigating the problem, solution and execution spaces of designing and building digital products."
+      body: "This tool helps you map a team's collective competencies for navigating the problem, solution and execution spaces while designing digital products."
     },
     {
       heading: 'Quick Start Guide',
       hideCarouselTitle: true,
       carousel: [
         { label: 'Plotting', title: 'Plotting', body: 'You can add up to 6 members here. Select each member\'s tags separately to adjust each of their parameters across 4 competencies and 2 mindsets.' },
-        { label: 'Customisation', title: 'Customisation', body: 'You can also adjust the parameters of a selected member by grabbing the corners of the graph directly; Do rename the member tags by double-tapping, delete them or simply toggle the visibility as needed.' },
-        { label: 'Merged View', title: 'Merged View', body: 'Toggle to view collective team strength by merging the individual graphs into a single block.' },
-        { label: 'Segment Analysis', title: 'Segment Analysis', body: "Select category labels near the graph to get a glimpse of team strength distribution within the 'Problem space, Solution space, or Execution space." },
+        { label: 'Customisation', title: 'Customisation', body: 'You can also adjust the parameters of a selected member by grabbing the corners of the graph directly; Do rename the member tags by double-tapping, delete them, or simply toggle the visibility as needed.' },
       ]
     },
     {
       heading: 'The Philosophy',
-      body: "This framework aims to provide a transparent mirror for setting the right expectations of a team's current capacity. Based on foundational human competencies and attitudes, it is grounded in the belief that our greatest potential is unlocked through how we complement each other, creating the space to build a more resilient and harmonious whole.",
-      footer: '<a href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-size:0.78rem;">Read more.</a>'
+      body: "This framework aligns team expectations by evaluating individual strengths and weaknesses. By emphasising how members complement one another, it fosters a resilient, harmonious, and high-potential collective.",
+      footer: '<a href="https://medium.com/awful-awkward-awesome-the-in-betweens/a-framework-to-put-together-a-mighty-design-team-for-product-and-service-based-organisations-df2cbcf5ff0c" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-size:0.78rem;">Learn more.</a>'
     },
     {
-      heading: 'The 2 Mindsets',
-      hideCarouselTitle: true,
-      carousel: [
-        { label: 'Hunter', title: 'The Hunter Mindset', body: 'The Hunter operates with an exploratory and curious mindset, primarily driven by the pursuit of innovation and novelty. They excel at divergent thinking, which allows them to find many potential paths and solutions when navigating ambiguous and unknown environments. While this approach carries a high risk, it also offers high rewards by setting new benchmarks through discovery.' },
-        { label: 'Farmer', title: 'The Farmer Mindset', body: 'The Farmer is defined by an optimisation of resources, craft, and scalable output. They utilize convergent thinking to refine a single, specific path, thriving best in a clear and structured environment. Their strength lies in being reliable and consistent, ensuring that the final output reaches the highest standards of execution.' },
-      ],
-      footer: '<a href="https://medium.com/awful-awkward-awesome-the-in-betweens/the-2-kinds-of-designers-to-hire-for-in-building-a-winning-product-design-team-fe2a37a02e38" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-size:0.78rem;">Read more.</a>'
-    },
-    {
-      heading: 'The 4 core competencies',
+      heading: 'The Parameters',
       carousel: [
         { label: 'C1', title: 'Research', body: 'Focuses on Problem Diagnosis. It\'s about understanding the "Why" through inductive reasoning and deep human science knowledge (user research, psychology, and anthropology to find long-term directional insights).' },
         { label: 'C2', title: 'Innovation', body: 'Focuses on Experimentation. This involves rapidly testing "How" to solve specific problems using deductive reasoning and logical thinking (UX design, data analysis, and hypothesis-driven product building).' },
         { label: 'C3', title: 'Aesthetics', body: 'Focuses on Emotional Design. The goal is to create "Delight" by refining validated solutions with high-quality visual design, motion, copywriting, and all kinds of storytelling elements.' },
         { label: 'C4', title: 'Governance', body: 'Focuses on Systems & Ops. It ensures quality, velocity, and sustainability by optimising team processes and building systems that scale. They also bring niche, super-specialised knowledge and the wisdom of having seen all seasons of the product life cycle.' },
-      ],
-      footer: '<a href="https://medium.com/awful-awkward-awesome-the-in-betweens/the-4-fundamental-design-sensibilities-a-competent-product-design-team-must-have-e7c19a80c3b7" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-size:0.78rem;">Read more.</a>'
+        { label: 'Hunter', title: 'The Hunter Mindset', body: 'The Hunter operates with an exploratory and curious mindset, primarily driven by the pursuit of innovation and novelty. They excel at divergent thinking, which allows them to find many potential paths and solutions when navigating ambiguous and unknown environments. While this approach carries a high risk, it also offers high rewards by setting new benchmarks through discovery.' },
+        { label: 'Farmer', title: 'The Farmer Mindset', body: 'The Farmer is defined by an optimisation of resources, craft, and scalable output. They utilize convergent thinking to refine a single, specific path, thriving best in a clear and structured environment. Their strength lies in being reliable and consistent, ensuring that the final output reaches the highest standards of execution.' },
+      ]
     },
     {
       heading: 'Unit logic',
