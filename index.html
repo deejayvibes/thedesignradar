@@ -1914,6 +1914,8 @@
       if (val !== members[activeMember].values[draggingIdx]) {
         members[activeMember].values[draggingIdx] = val;
         syncSlider(draggingIdx, val);
+        showCentreValue(val);
+        if (opaqueMode) highlightActiveLegend();
         updateChart(false);
       }
     }
@@ -1921,6 +1923,8 @@
     function onUp() {
       draggingIdx = null;
       canvas.style.cursor = '';
+      hideCentreValue();
+      if (opaqueMode) fadeActiveLegend();
     }
 
     canvas.addEventListener('mousedown',  onDown);
@@ -1931,6 +1935,66 @@
     canvas.addEventListener('touchmove',  onMove, {passive: false});
     canvas.addEventListener('touchend',   onUp);
   })();
+
+  // ── Centre value display when dragging nodes ──
+  let _centreValue = null;
+  let _centreHideTimer = null;
+  let _legendFadeTimer = null;
+
+  function showCentreValue(val) {
+    _centreValue = val;
+    clearTimeout(_centreHideTimer);
+    spiderChart.update('none');
+  }
+
+  function hideCentreValue() {
+    _centreHideTimer = setTimeout(() => {
+      _centreValue = null;
+      spiderChart.update('none');
+    }, 600);
+  }
+
+  function highlightActiveLegend() {
+    clearTimeout(_legendFadeTimer);
+    const c = MEMBER_COLOURS[activeMember % MEMBER_COLOURS.length];
+    const items = document.querySelectorAll('#chartLegend .legend-item');
+    let visIdx = 0;
+    members.forEach((mem, mi) => {
+      if (!mem.visible) return;
+      const el = items[visIdx]?.querySelector('span');
+      if (el) {
+        el.style.transition = 'color 0.05s';
+        el.style.color = mi === activeMember ? c.border : 'var(--muted)';
+      }
+      visIdx++;
+    });
+  }
+
+  function fadeActiveLegend() {
+    _legendFadeTimer = setTimeout(() => {
+      const items = document.querySelectorAll('#chartLegend .legend-item span');
+      items.forEach(el => {
+        el.style.transition = 'color 0.6s';
+        el.style.color = 'var(--muted)';
+      });
+    }, 600);
+  }
+
+  Chart.register({
+    id: 'centreValueDisplay',
+    afterDraw(chart) {
+      if (_centreValue === null) return;
+      const scale = chart.scales.r;
+      const ctx2  = chart.ctx;
+      ctx2.save();
+      ctx2.font = '600 12px Syne, sans-serif';
+      ctx2.fillStyle = '#8890b0';
+      ctx2.textAlign = 'center';
+      ctx2.textBaseline = 'middle';
+      ctx2.fillText(String(_centreValue), scale.xCenter, scale.yCenter);
+      ctx2.restore();
+    }
+  });
 
   // ── Download PNG ──
   function downloadChart() {
