@@ -1137,7 +1137,9 @@
     spiderChart.data.datasets = order.map(i => {
       const mem = members[i];
       const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
-      const isHidden = !members[i].visible;
+      const isHidden  = !members[i].visible;
+      const isActive  = i === activeMember;
+      const showPoints = !isHidden && !opaqueMode && isActive;
       const bg     = isHidden ? 'rgba(0,0,0,0)' : opaqueMode ? 'rgba(30,33,48,0.92)' : c.bg;
       const border = isHidden ? 'rgba(0,0,0,0)' : opaqueMode ? 'rgba(0,0,0,0)' : c.border;
       return {
@@ -1147,9 +1149,9 @@
         borderWidth: isHidden || opaqueMode ? 0 : 1.5,
         pointBackgroundColor: border,
         pointBorderColor: '#0b0c10',
-        pointBorderWidth: isHidden || opaqueMode ? 0 : 2,
-        pointRadius: isHidden || opaqueMode ? 0 : 4,
-        pointHoverRadius: isHidden || opaqueMode ? 0 : 8,
+        pointBorderWidth: showPoints ? 2 : 0,
+        pointRadius: showPoints ? 4 : 0,
+        pointHoverRadius: showPoints ? 8 : 0,
       };
     });
     spiderChart.options.animation = false;
@@ -1514,7 +1516,7 @@
       const displayName = mem.name.length > 8 ? mem.name.slice(0, 8) + '...' : mem.name;
       return `<div class="legend-item" data-member="${i}"
         style="cursor:pointer"
-        onclick="selectMemberQuiet(${i});if(!opaqueMode)flashOtherMembersDip(${i})"
+        onclick="(function(){var prev=activeMember;selectMemberQuiet(${i});})()"
         onmouseenter="flashMemberOutline(${i});if(${opaqueMode}){var s=this.querySelector('span');s.style.transition='color 0.05s';s.style.color='${c.border}';setTimeout(()=>{s.style.transition='color 0.8s';s.style.color='var(--muted)'},150)}">
         <span style="color:${nameColour};transition:color 0.2s">${displayName}</span>
       </div>`;
@@ -1567,36 +1569,52 @@
   };
   Chart.register(outlineFlashPlugin);
 
-  function flashOtherMembersDip(clickedIdx) {
-    if (opaqueMode) return; // only in normal view
+  function flashOtherMembersDip(clickedIdx, prevIdx) {
+    if (opaqueMode) return;
+
+    // Immediately zero out dots on prev active member — no easing
+    spiderChart.data.datasets.forEach(ds => {
+      const mi = members.findIndex(m => m.name === ds.label);
+      if (mi !== -1 && mi !== clickedIdx) {
+        ds.pointRadius = 0;
+        ds.pointBorderWidth = 0;
+      }
+    });
+    spiderChart.update('none');
+
     const duration = 800;
     const startTime = performance.now();
 
     function tick(now) {
       const t = Math.min(1, (now - startTime) / duration);
-      // Dip to 0 by t=0.3, hold at 0 until t=0.5 (0.2s hold), restore by t=1
       let alpha;
       if (t < 0.3)      alpha = 1 - (t / 0.3);
       else if (t < 0.5) alpha = 0;
       else              alpha = (t - 0.5) / 0.5;
 
-      spiderChart.data.datasets.forEach((ds, dsIdx) => {
-        // Find which member this dataset belongs to
+      spiderChart.data.datasets.forEach(ds => {
         const memberIdx = members.findIndex(m => m.name === ds.label);
         if (memberIdx === -1 || memberIdx === clickedIdx) return;
         if (!members[memberIdx].visible) return;
         const c = MEMBER_COLOURS[memberIdx % MEMBER_COLOURS.length];
         const a = Math.max(0, Math.min(1, alpha));
         ds.backgroundColor = c.bg.replace('0.10)', `${0.10 * a})`);
-        ds.borderColor = c.border.replace(')', `,${a})`).replace('rgb(', 'rgba(');
-        // If already rgba, update alpha component
         ds.borderColor = `rgba(${hexOrRgbToR(c.border)},${a})`;
+        ds.pointRadius = 0;
+        ds.pointBorderWidth = 0;
       });
 
       spiderChart.update('none');
       if (t < 1) requestAnimationFrame(tick);
       else {
-        // Restore fully
+        spiderChart.data.datasets.forEach(ds => {
+          const mi = members.findIndex(m => m.name === ds.label);
+          if (mi !== -1 && mi !== activeMember) {
+            ds.pointRadius = 0;
+            ds.pointBorderWidth = 0;
+          }
+        });
+        spiderChart.update('none');
         updateChart(false);
       }
     }
@@ -1659,6 +1677,26 @@
   function selectMemberQuiet(i) {
     if (i === activeMember) return;
     activeMember = i;
+
+    // Immediately zero dots on all non-active members, show on new active — no animation
+    if (!opaqueMode && spiderChart) {
+      spiderChart.data.datasets.forEach(ds => {
+        const mi = members.findIndex(m => m.name === ds.label);
+        if (mi === -1) return;
+        const c = MEMBER_COLOURS[mi % MEMBER_COLOURS.length];
+        if (mi === i && members[mi].visible) {
+          ds.pointRadius = 4;
+          ds.pointBorderWidth = 2;
+          ds.pointBackgroundColor = c.border;
+          ds.pointBorderColor = '#0b0c10';
+        } else {
+          ds.pointRadius = 0;
+          ds.pointBorderWidth = 0;
+        }
+      });
+      spiderChart.update('none');
+    }
+
     // Update tab active styles — guard against duplicate containers
     let tabIdx = 0;
     document.querySelectorAll('.member-tab').forEach(tab => {
@@ -1896,6 +1934,20 @@
 
   // ── Download PNG ──
   function downloadChart() {
+    // Temporarily hide all point dots for download (merged view off only)
+    let savedPoints = null;
+    if (!opaqueMode) {
+      savedPoints = spiderChart.data.datasets.map(ds => ({
+        pointRadius: ds.pointRadius,
+        pointBorderWidth: ds.pointBorderWidth,
+      }));
+      spiderChart.data.datasets.forEach(ds => {
+        ds.pointRadius = 0;
+        ds.pointBorderWidth = 0;
+      });
+      spiderChart.update('none');
+    }
+
     const PAD=48, chartCanvas=document.getElementById('spiderChart'), dpr=window.devicePixelRatio||1;
     const chartW=chartCanvas.width/dpr, chartH=chartCanvas.height/dpr;
 
@@ -1959,17 +2011,30 @@
           const file = new File([blob], 'The_Deejay-Graph.png', { type: 'image/png' });
           await navigator.share({ files: [file], title: 'The Deejay-Graph' });
         } catch (err) {
-          // User cancelled or share failed — fall back to download
           const link = document.createElement('a');
           link.download = 'The_Deejay-Graph.png';
           link.href = URL.createObjectURL(blob);
           document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+        // Restore dots after share
+        if (savedPoints) {
+          spiderChart.data.datasets.forEach((ds, idx) => {
+            if (savedPoints[idx]) { ds.pointRadius = savedPoints[idx].pointRadius; ds.pointBorderWidth = savedPoints[idx].pointBorderWidth; }
+          });
+          spiderChart.update('none');
         }
       }, 'image/png');
     } else {
       const link=document.createElement('a');
       link.download='The_Deejay-Graph.png'; link.href=off.toDataURL('image/png');
       document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      // Restore dots after download
+      if (savedPoints) {
+        spiderChart.data.datasets.forEach((ds, idx) => {
+          if (savedPoints[idx]) { ds.pointRadius = savedPoints[idx].pointRadius; ds.pointBorderWidth = savedPoints[idx].pointBorderWidth; }
+        });
+        spiderChart.update('none');
+      }
     }
   }
 
@@ -2003,9 +2068,9 @@
       [2, 4, 6, 8, 10, 12].forEach(val => {
         const r = scale.getDistanceFromCenterForValue(val);
         // Hunter: above centre
-        ctx2.fillText(String(val), cx, cy - r);
+        ctx2.fillText(String(val), cx - 8, cy - r);
         // Farmer: below centre
-        ctx2.fillText(String(val), cx, cy + r);
+        ctx2.fillText(String(val), cx - 8, cy + r);
       });
 
       ctx2.restore();
