@@ -1438,8 +1438,11 @@
       const fresh = slider.cloneNode(true);
       const ai = parseInt(fresh.getAttribute('data-ai'));
       let touchOnThumb = false;
+      let startX = null;
+      let startVal = null;
 
       fresh.addEventListener('input', () => {
+        if (!touchOnThumb) return; // block input events from non-thumb touches
         members[activeMember].values[ai] = +fresh.value;
         updateThumbLabel(ai, +fresh.value);
         updateChart(false);
@@ -1447,26 +1450,47 @@
 
       fresh.addEventListener('touchstart', e => {
         const rect   = fresh.getBoundingClientRect();
-        const trackW = rect.width;
         const thumbR = 9;
         const ratio  = fresh.value / 12;
-        const thumbX = rect.left + thumbR + ratio * (trackW - thumbR * 2);
+        const thumbX = rect.left + thumbR + ratio * (rect.width - thumbR * 2);
         const tx     = e.touches[0].clientX;
-        touchOnThumb = Math.abs(tx - thumbX) <= thumbR + 4;
+        touchOnThumb = Math.abs(tx - thumbX) <= thumbR + 8;
         if (!touchOnThumb) {
           e.preventDefault();
           e.stopPropagation();
+          return;
         }
+        startX = tx;
+        startVal = +fresh.value;
       }, { passive: false });
 
       fresh.addEventListener('touchmove', e => {
         if (!touchOnThumb) {
           e.preventDefault();
           e.stopPropagation();
+          return;
+        }
+        // Manual value calculation from drag distance
+        e.preventDefault();
+        const rect  = fresh.getBoundingClientRect();
+        const thumbR = 9;
+        const trackW = rect.width - thumbR * 2;
+        const dx = e.touches[0].clientX - startX;
+        const dVal = (dx / trackW) * 12;
+        const newVal = Math.round(Math.max(0, Math.min(12, startVal + dVal)));
+        if (newVal !== +fresh.value) {
+          fresh.value = newVal;
+          members[activeMember].values[ai] = newVal;
+          updateThumbLabel(ai, newVal);
+          updateChart(false);
         }
       }, { passive: false });
 
-      fresh.addEventListener('touchend', () => { touchOnThumb = false; });
+      fresh.addEventListener('touchend', () => {
+        touchOnThumb = false;
+        startX = null;
+        startVal = null;
+      });
 
       slider.parentNode.replaceChild(fresh, slider);
     });
