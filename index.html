@@ -1542,6 +1542,7 @@
       let startVal = null;
 
       slider.addEventListener('touchstart', e => {
+        e.preventDefault(); // ALWAYS block native snap
         const rect   = slider.getBoundingClientRect();
         const ratio  = +slider.value / 12;
         const thumbX = rect.left + (ratio * rect.width);
@@ -1552,8 +1553,6 @@
           startVal = +slider.value;
           const lbl = document.getElementById(`val-${ai}`);
           if (lbl) { lbl.style.fontSize = '0.875rem'; lbl.style.top = '-34px'; }
-        } else {
-          e.preventDefault();
         }
       }, { passive: false });
 
