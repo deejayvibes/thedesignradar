@@ -1448,6 +1448,17 @@
         }
 
         title.innerHTML = leftGroup + eyeBtn;
+
+        // Double-tap on section title when member is hidden → show error
+        let _titleTapTime = 0;
+        title.querySelector('.panel-title-left').addEventListener('click', () => {
+          if (!members[activeMember].visible) {
+            const now = Date.now();
+            if (now - _titleTapTime < 350) showEnableToEdit();
+            _titleTapTime = now;
+          }
+        });
+
         panel.appendChild(title);
         // Divider below each section title
         const hr = document.createElement('div');
@@ -1470,7 +1481,7 @@
         <div style="position:relative;width:100%;margin-top:6px">
           <input type="range" min="0" max="12" step="1" value="${val}"
             id="range-${ai}"
-            data-ai="${ai}" style="accent-color:${c.border};--thumb-color:${c.border};width:100%;margin:0"
+            data-ai="${ai}" style="accent-color:${c.border};--thumb-color:${c.border};width:100%;margin:0;touch-action:none;"
             onmousedown="
               (function(e){
                 var rect=e.target.getBoundingClientRect();
@@ -1541,24 +1552,33 @@
       let startX = null;
       let startVal = null;
 
+      // Block ALL native touch interaction
       slider.addEventListener('touchstart', e => {
-        e.preventDefault(); // ALWAYS block native snap
+        e.preventDefault();
+        e.stopPropagation();
+
         const rect   = slider.getBoundingClientRect();
         const ratio  = +slider.value / 12;
-        const thumbX = rect.left + (ratio * rect.width);
+        // Thumb centre position
+        const thumbX = rect.left + ratio * rect.width;
         const tx     = e.touches[0].clientX;
-        if (Math.abs(tx - thumbX) <= 22) {
+
+        // Only start drag if touching within 24px of thumb
+        if (Math.abs(tx - thumbX) <= 24) {
           dragging = true;
           startX   = tx;
           startVal = +slider.value;
           const lbl = document.getElementById(`val-${ai}`);
           if (lbl) { lbl.style.fontSize = '0.875rem'; lbl.style.top = '-34px'; }
         }
-      }, { passive: false });
+        // If not on thumb — do nothing (no snap)
+      }, { passive: false, capture: true });
 
       slider.addEventListener('touchmove', e => {
-        if (!dragging) { e.preventDefault(); return; }
         e.preventDefault();
+        e.stopPropagation();
+        if (!dragging) return;
+
         const rect   = slider.getBoundingClientRect();
         const dx     = e.touches[0].clientX - startX;
         const newVal = Math.round(Math.max(0, Math.min(12, startVal + (dx / rect.width) * 12)));
@@ -1568,15 +1588,16 @@
           updateThumbLabel(ai, newVal);
           updateChart(false);
         }
-      }, { passive: false });
+      }, { passive: false, capture: true });
 
-      slider.addEventListener('touchend', () => {
+      slider.addEventListener('touchend', e => {
+        e.preventDefault();
         dragging = false;
         startX = null;
         startVal = null;
         const lbl = document.getElementById(`val-${ai}`);
         if (lbl) { lbl.style.fontSize = '0.6875rem'; lbl.style.top = '-22px'; }
-      });
+      }, { passive: false, capture: true });
     });
   }
 
@@ -2158,8 +2179,8 @@
       const scale = chart.scales.r;
       const ctx2  = chart.ctx;
       ctx2.save();
-      ctx2.font = '600 12px Syne, sans-serif';
-      ctx2.fillStyle = '#8890b0';
+      ctx2.font = '600 14px Syne, sans-serif';
+      ctx2.fillStyle = '#ffffff';
       ctx2.textAlign = 'center';
       ctx2.textBaseline = 'middle';
       ctx2.fillText(String(_centreValue), scale.xCenter, scale.yCenter);
