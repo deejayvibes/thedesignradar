@@ -1158,14 +1158,7 @@
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#13151c', borderColor: '#1e2130', borderWidth: 1,
-          titleFont: { family: 'DM Mono', size: 11 },
-          bodyFont:  { family: 'Syne', size: 13, weight: '700' },
-          padding: 12,
-          callbacks: {
-            title: items => members[items[0].datasetIndex]?.name || '',
-            label: item  => `  ${axisLabels[item.dataIndex]}: ${item.raw} / 12`
-          }
+          enabled: false,
         }
       },
       scales: {
@@ -2066,6 +2059,7 @@
     // Update cursor based on proximity to any node
     function updateCursor(e) {
       if (draggingIdx !== null) return;
+      if (!members[activeMember].visible) { canvas.style.cursor = ''; return; }
       const {x, y} = getPos(e);
       const idx = findNode(x, y, 40);
       canvas.style.cursor = idx !== -1 ? 'grab' : '';
