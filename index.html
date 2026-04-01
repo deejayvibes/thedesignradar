@@ -103,7 +103,7 @@
     }
 
     .notif-bell:hover {
-      color: var(--text);
+      color: var(--accent);
       background: transparent;
     }
 
@@ -479,13 +479,13 @@
     .panel-title-left { display: flex; align-items: center; gap: 0.5rem; }
     .section-eye-btn {
       background: none; border: none; padding: 4px; cursor: pointer;
-      color: inherit; opacity: 0.7; line-height: 1; flex-shrink: 0;
-      transition: opacity 0.2s;
+      color: var(--accent); opacity: 1; line-height: 1; flex-shrink: 0;
+      transition: color 0.2s;
       position: relative;
       min-width: 28px; min-height: 28px;
       display: flex; align-items: center; justify-content: center;
     }
-    .section-eye-btn:hover { opacity: 1; }
+    .section-eye-btn:hover { color: rgba(127,255,178,0.75); }
     .section-eye-btn .eye-tip {
       position: absolute;
       right: 0;
@@ -684,7 +684,7 @@
 
     .member-tab .tab-remove {
       background: none; border: none; color: var(--muted);
-      cursor: pointer; font-size: 0.75rem; line-height: 1;
+      cursor: pointer; font-size: 0.9rem; line-height: 1;
       padding: 0; opacity: 0; transition: opacity 0.15s;
       margin-left: 0.4rem;
     }
@@ -833,7 +833,7 @@
       font-size: 0.55rem;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.12);
+      color: var(--muted);
       pointer-events: none;
       z-index: 1;
     }
@@ -865,13 +865,13 @@
       text-align: center;
       pointer-events: auto !important;
       cursor: default;
-      color: rgba(255,255,255,0.12);
+      color: var(--muted);
       position: relative;
       z-index: 15;
     }
 
     /* Download button — remove green, brighten icon+label on hover */
-    .btn-download-icon:hover { color: rgba(255,255,255,0.7); border-color: var(--border); }
+    .btn-download-icon:hover { color: var(--accent); border-color: var(--accent); }
     .download-group:hover .download-label { color: rgba(255,255,255,0.7); }
 
     /* Merged View toggle — brighten label on hover */
@@ -1035,8 +1035,8 @@
       pointer-events: none;
     }
 
-    .opaque-toggle:hover .opaque-toggle-thumb { background: rgba(255,255,255,0.7); }
-    .opaque-toggle.on:hover .opaque-toggle-thumb { background: #fff; }
+    .opaque-toggle:hover .opaque-toggle-thumb { background: var(--accent); }
+    .opaque-toggle.on:hover .opaque-toggle-thumb { background: rgba(127,255,178,0.7); }
 
     .opaque-toggle.on .opaque-toggle-thumb {
       transform: translateX(20px);
@@ -1474,7 +1474,7 @@
       row.innerHTML = `
         <div class="metric-header">
           <div class="metric-label">
-            <span class="dot" style="background:${AXIS_DOTS[ai % AXIS_DOTS.length]}"></span>
+            
             <span style="font-size:0.78rem;font-weight:600">${label}</span>
           </div>
         </div>
