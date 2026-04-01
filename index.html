@@ -1490,7 +1490,7 @@
                 var thumbX=rect.left + thumbR + ratio*(trackW - thumbR*2);
                 if(Math.abs(e.clientX - thumbX) <= thumbR + 4){
                   var lbl=document.getElementById('val-${ai}');
-                  if(lbl)lbl.style.fontSize='0.875rem';lbl.style.top='-34px';
+                  if(lbl)lbl.style.fontSize='0.983rem';lbl.style.top='-40px';
                 } else { e.preventDefault(); }
               })(event)"
             onmouseup="(function(){var lbl=document.getElementById('val-${ai}');if(lbl)lbl.style.fontSize='0.6875rem';lbl.style.top='-22px';})()"
@@ -1569,13 +1569,14 @@
         const rect   = overlay.getBoundingClientRect();
         const thumbX = getThumbX(rect);
         const tx     = e.touches[0].clientX;
-        if (Math.abs(tx - thumbX) <= 24) {
+        if (Math.abs(tx - thumbX) <= 40) {
           dragging = true;
           startX   = tx;
           startVal = +slider.value;
           const lbl = document.getElementById(`val-${ai}`);
-          if (lbl) { lbl.style.fontSize = '0.875rem'; lbl.style.top = '-34px'; }
+          if (lbl) { lbl.style.fontSize = '0.983rem'; lbl.style.top = '-40px'; }
         }
+        // else: touch on track ignored — no snap, no drag
       }, { passive: false });
 
       overlay.addEventListener('touchmove', e => {
