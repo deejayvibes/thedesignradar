@@ -1610,7 +1610,17 @@
     const offset = 9 - pct * 18;
     label.style.left = `calc(${pct * 100}% + ${offset}px)`;
     label.textContent = val;
-    // Show/hide scale ticks — hide only the one matching current value
+    // Enlarge on change
+    label.style.fontSize = '0.983rem';
+    label.style.top = '-40px';
+    // Clear any pending restore timer
+    if (label._restoreTimer) clearTimeout(label._restoreTimer);
+    label._restoreTimer = setTimeout(() => {
+      label.style.fontSize = '0.6875rem';
+      label.style.top = '-22px';
+      label._restoreTimer = null;
+    }, 800);
+    // Show/hide scale ticks
     [0,2,4,6,8,10,12].forEach(n => {
       const tick = document.getElementById(`tick-${ai}-${n}`);
       if (tick) tick.style.opacity = (n === val) ? '0' : '1';
@@ -2553,7 +2563,8 @@
 <!-- Notification Drawer -->
 <div class="notif-backdrop" id="notifBackdrop" onclick="closeDrawer()"></div>
 <div class="notif-drawer" id="notifDrawer">
-  <div class="notif-header" style="justify-content:flex-end">
+  <div class="notif-header" style="justify-content:space-between">
+    <span style="font-family:var(--font-display);font-size:0.90rem;font-weight:600;letter-spacing:0.01em;color:var(--accent)">Tips &amp; Info</span>
     <button class="notif-close" onclick="closeDrawer()">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
         <line x1="5" y1="5" x2="19" y2="19"/>
