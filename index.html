@@ -132,7 +132,7 @@
       border-radius: 6px;
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 0.65rem;
+      font-size: 0.775rem;
       cursor: pointer;
       transition: all 0.2s;
       letter-spacing: 0.05em;
@@ -572,7 +572,7 @@
       border: 1px solid #ff6b9d;
       color: #ff6b9d;
       font-family: var(--font-mono);
-      font-size: 0.6rem;
+      font-size: 0.725rem;
       letter-spacing: 0.06em;
       white-space: nowrap;
       padding: 0.35rem 0.75rem;
@@ -586,11 +586,11 @@
     #eyeCallout::after {
       content: '';
       position: absolute;
-      left: 100%;
-      top: 50%;
-      transform: translateY(-50%);
+      left: 50%;
+      top: 100%;
+      transform: translateX(-50%);
       border: 5px solid transparent;
-      border-left-color: #ff6b9d;
+      border-top-color: #ff6b9d;
     }
     #eyeCallout.show { opacity: 1; animation: shake 0.5s ease; }
 
@@ -772,7 +772,7 @@
       position: fixed;
       z-index: 9999;
       background: #1e2130; border: 1px solid #ff6b9d; color: #ff6b9d;
-      font-family: var(--font-mono); font-size: 0.65rem;
+      font-family: var(--font-mono); font-size: 0.775rem;
       padding: 0.4rem 0.85rem; border-radius: 6px; letter-spacing: 0.06em;
       opacity: 0; pointer-events: none; transition: opacity 0.2s;
       white-space: nowrap;
@@ -1110,7 +1110,16 @@
   const axisLabels = ['Hunter','C1','C4','Farmer','C3','C2'];
   const panelOrder = [0, 3, 1, 5, 4, 2]; // Hunter, Farmer, C1, C2, C3, C4
 
-  let members      = [{ name: 'Memb-A', values: [6, 6, 6, 6, 6, 6], visible: true }];
+  let _usedColorIdxs = new Set([0]);
+  function _pickRandomColor() {
+    const all = [0,1,2,3,4,5];
+    const available = all.filter(i => !_usedColorIdxs.has(i));
+    if (!available.length) return Math.floor(Math.random() * 6);
+    const idx = available[Math.floor(Math.random() * available.length)];
+    _usedColorIdxs.add(idx);
+    return idx;
+  }
+  let members = [{ name: 'Memb-A', values: [6, 6, 6, 6, 6, 6], visible: true, colorIdx: 0 }];
   let activeMember = 0;
 
   // ── Chart ──
@@ -1188,7 +1197,7 @@
 
     spiderChart.data.datasets = order.map(i => {
       const mem = members[i];
-      const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+      const c = MEMBER_COLOURS[members[i]?.colorIdx ?? i % MEMBER_COLOURS.length];
       const isHidden  = !members[i].visible;
       const isActive  = i === activeMember;
       const showPoints = !isHidden && !opaqueMode && isActive;
@@ -1282,7 +1291,7 @@
       if (!tabsEl) return;
       tabsEl.innerHTML = '';
       members.forEach((mem, i) => {
-        const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+        const c = MEMBER_COLOURS[members[i]?.colorIdx ?? i % MEMBER_COLOURS.length];
         const tab = document.createElement('div');
         tab.className = 'member-tab' + (i === activeMember ? ' active' : '');
         tab.style.borderColor = i === activeMember ? c.border : 'transparent';
@@ -1377,7 +1386,7 @@
   function renderPanel() {
     const panel = document.getElementById('metricsPanel');
     const mem   = members[activeMember];
-    const c     = MEMBER_COLOURS[activeMember % MEMBER_COLOURS.length];
+    const c     = MEMBER_COLOURS[members[activeMember]?.colorIdx ?? activeMember % MEMBER_COLOURS.length];
     panel.innerHTML = '';
 
     // panelOrder: Hunter(0), Farmer(3), C1(1), C2(5), C3(4), C4(2)
@@ -1563,7 +1572,7 @@
   function renderLegend() {
     document.getElementById('chartLegend').innerHTML = members.map((mem, i) => {
       if (!mem.visible) return '';
-      const c = MEMBER_COLOURS[i % MEMBER_COLOURS.length];
+      const c = MEMBER_COLOURS[members[i]?.colorIdx ?? i % MEMBER_COLOURS.length];
       const nameColour = opaqueMode ? 'var(--muted)' : c.border;
       const displayName = mem.name.length > 8 ? mem.name.slice(0, 8) + '...' : mem.name;
       return `<div class="legend-item" data-member="${i}"
@@ -1594,7 +1603,7 @@
         if (!alpha || alpha <= 0) return;
         const mem    = members[mi];
         if (!mem || !mem.visible) return;
-        const c      = MEMBER_COLOURS[mi % MEMBER_COLOURS.length];
+        const c      = MEMBER_COLOURS[members[mi]?.colorIdx ?? mi % MEMBER_COLOURS.length];
 
         ctx2.save();
         ctx2.beginPath();
@@ -1648,7 +1657,7 @@
         const memberIdx = members.findIndex(m => m.name === ds.label);
         if (memberIdx === -1 || memberIdx === clickedIdx) return;
         if (!members[memberIdx].visible) return;
-        const c = MEMBER_COLOURS[memberIdx % MEMBER_COLOURS.length];
+        const c = MEMBER_COLOURS[members[memberIdx]?.colorIdx ?? memberIdx % MEMBER_COLOURS.length];
         const a = Math.max(0, Math.min(1, alpha));
         ds.backgroundColor = c.bg.replace('0.10)', `${0.10 * a})`);
         ds.borderColor = `rgba(${hexOrRgbToR(c.border)},${a})`;
@@ -1702,18 +1711,19 @@
 
   let _eyeCalloutTimer = null;
   function showEnableToEdit() {
-    // Double rAF — first frame triggers after render, second after layout/paint
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const callout = document.getElementById('eyeCallout');
       const eyeBtn  = document.getElementById('eyeBtn0') || document.getElementById('eyeBtn2');
       if (!callout || !eyeBtn) return;
-      callout.textContent = 'Enable View to Edit';
-      const rect = eyeBtn.getBoundingClientRect();
-      callout.style.top        = (rect.top + rect.height / 2 - 13) + 'px';
-      callout.style.left       = (rect.left - 156) + 'px';
-      callout.style.visibility = '';
+      callout.textContent = 'Enable visibility to interact.';
       callout.classList.remove('show');
       void callout.offsetWidth;
+      const rect = eyeBtn.getBoundingClientRect();
+      const calloutW = callout.offsetWidth || 140;
+      const calloutH = callout.offsetHeight || 26;
+      callout.style.top        = (rect.top - calloutH - 16) + 'px';
+      callout.style.left       = (rect.left + rect.width / 2 - calloutW / 2) + 'px';
+      callout.style.visibility = '';
       callout.classList.add('show');
       clearTimeout(_eyeCalloutTimer);
       _eyeCalloutTimer = setTimeout(() => callout.classList.remove('show'), 2500);
@@ -1735,7 +1745,7 @@
       spiderChart.data.datasets.forEach(ds => {
         const mi = members.findIndex(m => m.name === ds.label);
         if (mi === -1) return;
-        const c = MEMBER_COLOURS[mi % MEMBER_COLOURS.length];
+        const c = MEMBER_COLOURS[members[mi]?.colorIdx ?? mi % MEMBER_COLOURS.length];
         if (mi === i && members[mi].visible) {
           ds.pointRadius = 4;
           ds.pointBorderWidth = 2;
@@ -1754,7 +1764,7 @@
     document.querySelectorAll('.member-tab').forEach(tab => {
       const mi = parseInt(tab.querySelector('input')?.getAttribute('onclick')?.match(/\d+/)?.[0] ?? tabIdx);
       if (mi >= members.length) return;
-      const c = MEMBER_COLOURS[mi % MEMBER_COLOURS.length];
+      const c = MEMBER_COLOURS[members[mi]?.colorIdx ?? mi % MEMBER_COLOURS.length];
       tab.classList.toggle('active', mi === i);
       tab.style.borderColor = mi === i ? c.border : 'transparent';
       tab.style.opacity = !members[mi].visible ? '0.35' : '';
@@ -1781,12 +1791,13 @@
     const anchor = (addSlot && addSlot.getBoundingClientRect().width > 0) ? addSlot : mobileAdd;
 
     if (anchor) {
-      const rect  = anchor.getBoundingClientRect();
-      const toastW = 180;
-      const left   = rect.left - toastW - 8;
-      const top    = rect.top + rect.height / 2 - 14; // vertically centred
-      t.style.left      = Math.max(8, left) + 'px';
-      t.style.top       = top + 'px';
+      const rect   = anchor.getBoundingClientRect();
+      void t.offsetWidth; // force layout to get toast width
+      const toastW = t.offsetWidth || 180;
+      const left   = rect.left + rect.width / 2 - toastW / 2;
+      const top    = rect.top - t.offsetHeight - 16;
+      t.style.left      = Math.max(8, Math.min(window.innerWidth - toastW - 8, left)) + 'px';
+      t.style.top       = Math.max(8, top) + 'px';
       t.style.transform = '';
     } else {
       t.style.left      = '50%';
@@ -1810,7 +1821,7 @@
     }).filter(Boolean));
     const available = letters.filter(l => !used.has(l));
     const letter = available[Math.floor(Math.random() * available.length)];
-    members.push({ name: `Memb-${letter}`, values: [6,6,6,6,6,6], visible: true });
+    members.push({ name: `Memb-${letter}`, values: [6,6,6,6,6,6], visible: true, colorIdx: _pickRandomColor() });
     selectMember(members.length - 1);
   }
 
@@ -1883,6 +1894,7 @@
 
     // Delete after animation completes
     setTimeout(() => {
+      _usedColorIdxs.delete(members[i].colorIdx);
       members.splice(i, 1);
       activeMember = Math.min(activeMember, members.length - 1);
       renderTabs(); renderPanel(); updateChart(); renderLegend();
@@ -2008,7 +2020,7 @@
 
   function highlightActiveLegend() {
     clearTimeout(_legendFadeTimer);
-    const c = MEMBER_COLOURS[activeMember % MEMBER_COLOURS.length];
+    const c = MEMBER_COLOURS[members[activeMember]?.colorIdx ?? activeMember % MEMBER_COLOURS.length];
     const items = document.querySelectorAll('#chartLegend .legend-item');
     let visIdx = 0;
     members.forEach((mem, mi) => {
@@ -2406,7 +2418,7 @@
   <svg class="bin-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="position:absolute"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
 </div>
 
-<div id="eyeCallout">Enable View to Edit</div>
+<div id="eyeCallout">Enable visibility to interact.</div>
 
 <!-- Notification Drawer -->
 <div class="notif-backdrop" id="notifBackdrop" onclick="closeDrawer()"></div>
