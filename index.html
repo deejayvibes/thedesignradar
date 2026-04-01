@@ -294,7 +294,7 @@
       border: none;
       color: var(--muted);
       cursor: pointer;
-      font-size: 1.2rem;
+      font-size: 2.16rem;
       line-height: 1;
       padding: 0;
       transition: color 0.2s;
@@ -1495,6 +1495,7 @@
               })(event)"
             onmouseup="(function(){var lbl=document.getElementById('val-${ai}');if(lbl)lbl.style.fontSize='0.6875rem';lbl.style.top='-22px';})()"
             oninput="members[${activeMember}].values[${ai}]=+this.value;updateThumbLabel(${ai},+this.value);updateChart(false)"/>
+          <div class="mobile-slider-overlay" data-ai="${ai}" data-val="${val}" style="position:absolute;inset:0;display:none;"></div>
           <span id="val-${ai}" style="
             position:absolute;
             top:-22px;
@@ -1543,27 +1544,31 @@
   function attachSliderTouchGuards() {
     if (window.innerWidth > 999) return;
 
-    document.querySelectorAll('input[type="range"][data-ai]').forEach(slider => {
-      if (slider.dataset.touchAttached) return;
-      slider.dataset.touchAttached = '1';
+    // Show overlays on mobile — they sit on top of native sliders and block all native touch
+    document.querySelectorAll('.mobile-slider-overlay').forEach(overlay => {
+      if (overlay.dataset.touchAttached) return;
+      overlay.dataset.touchAttached = '1';
+      overlay.style.display = 'block'; // activate overlay to cover native input
+      overlay.style.zIndex = '10';
+      overlay.style.touchAction = 'none';
+      overlay.style.cursor = 'default';
 
-      const ai = parseInt(slider.getAttribute('data-ai'));
+      const ai = parseInt(overlay.getAttribute('data-ai'));
+      const slider = document.getElementById(`range-${ai}`);
       let dragging = false;
       let startX = null;
       let startVal = null;
 
-      // Block ALL native touch interaction
-      slider.addEventListener('touchstart', e => {
+      const getThumbX = (rect) => {
+        const ratio = +slider.value / 12;
+        return rect.left + ratio * rect.width;
+      };
+
+      overlay.addEventListener('touchstart', e => {
         e.preventDefault();
-        e.stopPropagation();
-
-        const rect   = slider.getBoundingClientRect();
-        const ratio  = +slider.value / 12;
-        // Thumb centre position
-        const thumbX = rect.left + ratio * rect.width;
+        const rect   = overlay.getBoundingClientRect();
+        const thumbX = getThumbX(rect);
         const tx     = e.touches[0].clientX;
-
-        // Only start drag if touching within 24px of thumb
         if (Math.abs(tx - thumbX) <= 24) {
           dragging = true;
           startX   = tx;
@@ -1571,15 +1576,12 @@
           const lbl = document.getElementById(`val-${ai}`);
           if (lbl) { lbl.style.fontSize = '0.875rem'; lbl.style.top = '-34px'; }
         }
-        // If not on thumb — do nothing (no snap)
-      }, { passive: false, capture: true });
+      }, { passive: false });
 
-      slider.addEventListener('touchmove', e => {
+      overlay.addEventListener('touchmove', e => {
         e.preventDefault();
-        e.stopPropagation();
         if (!dragging) return;
-
-        const rect   = slider.getBoundingClientRect();
+        const rect   = overlay.getBoundingClientRect();
         const dx     = e.touches[0].clientX - startX;
         const newVal = Math.round(Math.max(0, Math.min(12, startVal + (dx / rect.width) * 12)));
         if (newVal !== +slider.value) {
@@ -1588,16 +1590,15 @@
           updateThumbLabel(ai, newVal);
           updateChart(false);
         }
-      }, { passive: false, capture: true });
+      }, { passive: false });
 
-      slider.addEventListener('touchend', e => {
-        e.preventDefault();
+      overlay.addEventListener('touchend', () => {
         dragging = false;
         startX = null;
         startVal = null;
         const lbl = document.getElementById(`val-${ai}`);
         if (lbl) { lbl.style.fontSize = '0.6875rem'; lbl.style.top = '-22px'; }
-      }, { passive: false, capture: true });
+      });
     });
   }
 
@@ -2552,7 +2553,12 @@
 <div class="notif-backdrop" id="notifBackdrop" onclick="closeDrawer()"></div>
 <div class="notif-drawer" id="notifDrawer">
   <div class="notif-header" style="justify-content:flex-end">
-    <button class="notif-close" onclick="closeDrawer()">×</button>
+    <button class="notif-close" onclick="closeDrawer()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+        <line x1="5" y1="5" x2="19" y2="19"/>
+        <line x1="19" y1="5" x2="5" y2="19"/>
+      </svg>
+    </button>
   </div>
   <div class="notif-body" id="accordionBody"></div>
   <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);flex-shrink:0">
