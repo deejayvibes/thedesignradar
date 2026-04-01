@@ -586,7 +586,7 @@
     #eyeCallout::after {
       content: '';
       position: absolute;
-      left: 50%;
+      left: var(--arrow-left, 50%);
       top: 100%;
       transform: translateX(-50%);
       border: 5px solid transparent;
@@ -941,6 +941,10 @@
         min-height: 36px;
       }
       .add-member-btn .plus { font-size: 1.1rem; }
+
+      /* Unified notification font size on mobile (+1pt) */
+      .toast { font-size: 0.8rem; }
+      #eyeCallout { font-size: 0.8rem; }
     }
     .opaque-toggle-wrap {
       display: flex;
@@ -1718,11 +1722,23 @@
       callout.textContent = 'Enable visibility to interact.';
       callout.classList.remove('show');
       void callout.offsetWidth;
-      const rect = eyeBtn.getBoundingClientRect();
-      const calloutW = callout.offsetWidth || 140;
-      const calloutH = callout.offsetHeight || 26;
-      callout.style.top        = (rect.top - calloutH - 16) + 'px';
-      callout.style.left       = (rect.left + rect.width / 2 - calloutW / 2) + 'px';
+      const rect      = eyeBtn.getBoundingClientRect();
+      const calloutW  = callout.offsetWidth || 160;
+      const calloutH  = callout.offsetHeight || 28;
+      const margin    = 8;
+      // Position above eye button, centred on it
+      let top  = rect.top - calloutH - 16;
+      let left = rect.left + rect.width / 2 - calloutW / 2;
+      // Clamp within viewport
+      const maxLeft = window.innerWidth - calloutW - margin;
+      left = Math.max(margin, Math.min(maxLeft, left));
+      top  = Math.max(margin, top);
+      // Move arrow to point at eye button centre from clamped position
+      const eyeCentreX = rect.left + rect.width / 2;
+      const arrowLeft  = Math.max(10, Math.min(calloutW - 10, eyeCentreX - left));
+      callout.style.top        = top + 'px';
+      callout.style.left       = left + 'px';
+      callout.style.setProperty('--arrow-left', arrowLeft + 'px');
       callout.style.visibility = '';
       callout.classList.add('show');
       clearTimeout(_eyeCalloutTimer);
