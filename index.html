@@ -1338,6 +1338,16 @@
 
   window.addEventListener('resize', drawExtensionLines);
 
+  window.addEventListener('beforeunload', e => {
+    const hasChanges = members.some(m => m.values.some(v => v !== 6));
+    if (hasChanges) {
+      const msg = 'Your progress will be lost if you leave. Are you sure you want to proceed?';
+      e.preventDefault();
+      e.returnValue = msg;
+      return msg;
+    }
+  });
+
   // ── Tabs ──
   function renderTabs() {
     ['memberTabs', 'memberTabsDesktop'].forEach(containerId => {
@@ -2630,9 +2640,9 @@
     const isMob      = window.innerWidth <= 999;
     const msgSize    = isMob ? '0.95rem' : '0.82rem';
     const btnSize    = isMob ? '0.85rem' : '0.72rem';
-    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Next</button>`;
-    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
-    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0 0.6rem;height:28px;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
+    const nextBtn    = `<button id="ob-next" style="background:#ffdc32;border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Next</button>`;
+    const closeBtn   = `<button id="ob-close" style="background:#ffdc32;border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
+    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid #ffdc32;border-radius:3px;padding:0 0.6rem;height:28px;font-family:var(--font-mono);font-size:${btnSize};color:#ffdc32;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
     const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
 
     tip.innerHTML = `
