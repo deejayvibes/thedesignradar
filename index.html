@@ -2476,7 +2476,8 @@
       carousel: [
         { label: 'Plotting', title: 'Plotting', body: 'You can add up to 6 members here. Select each member\'s tags separately to adjust each of their parameters across 4 competencies and 2 mindsets.' },
         { label: 'Customisation', title: 'Customisation', body: 'You can also adjust the parameters of a selected member by grabbing the corners of the graph directly; Do rename the member tags by double-tapping, delete them, or simply toggle the visibility as needed.' },
-      ]
+      ],
+      footer: '<a href="javascript:void(0)" onclick="closeDrawer();setTimeout(obRestart,300)" style="color:var(--accent);text-decoration:none;font-family:var(--font-mono);font-size:0.78rem;">Take a tour.</a>'
     },
     {
       heading: 'The philosophy',
@@ -2611,7 +2612,9 @@
       'border:1px solid #ffdc32',
       'border-radius:6px',
       'padding:0.75rem 1rem',
-      'max-width:210px',
+      'width:max-content',
+      'max-width:min(260px,80vw)',
+      'box-sizing:border-box',
       'box-shadow:0 4px 24px rgba(0,0,0,0.6)',
       'font-family:var(--font-mono)',
       'font-size:0.68rem',
@@ -2624,14 +2627,17 @@
       'pointer-events:auto',
     ].join(';');
 
-    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">SKIP ALL</button>`;
-    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">GOT IT</button>`;
-    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
-    const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
+    const isMob      = window.innerWidth <= 999;
+    const msgSize    = isMob ? '0.95rem' : '0.82rem';
+    const btnSize    = isMob ? '0.85rem' : '0.72rem';
+    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
+    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">NEXT</button>`;
+    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
+    const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
 
     tip.innerHTML = `
       ${image ? `<img src="${image}" style="width:100%;border-radius:4px;margin-bottom:0.55rem;display:block">` : ''}
-      <div style="margin-bottom:0.65rem;letter-spacing:0.02em;font-size:0.82rem">${message}</div>
+      <div style="margin-bottom:0.65rem;letter-spacing:0.02em;font-size:${msgSize}">${message}</div>
       <div style="display:flex;gap:0.45rem;align-items:center;justify-content:flex-end">
         ${hasNext ? skipBtn + nextBtn : isLast ? restartBtn + closeBtn : closeBtn}
       </div>
@@ -2726,7 +2732,7 @@
     if (_ob.dismissed || _ob.memberAdded) return;
     const btn = document.querySelector('.add-member-btn');
     if (!btn) return;
-    _obShow({ targetEl: btn, message: 'You can add a new member from here', hasNext: true, onNext: obStep2 });
+    _obShow({ targetEl: btn, message: 'Add a new member from here', hasNext: true, onNext: obStep2 });
   }
 
   function obStep2() {
@@ -2735,7 +2741,7 @@
     if (!capsule) { obStep3(); return; }
     _obShow({
       targetEl: capsule,
-      message: "Double-tap to rename.",
+      message: "Double-tap to rename & X to delete.",
       hasNext: true,
       onNext: obStep3
     });
@@ -2746,33 +2752,41 @@
     if (_ob.eyeUsed) { obStep4(); return; }
     const eye = document.getElementById('eyeBtn0');
     if (!eye) return;
-    _obShow({ targetEl: eye, message: 'You can hide a member from here', hasNext: true, onNext: obStep4 });
+    _obShow({ targetEl: eye, message: 'Hide/Show a member from here', hasNext: true, onNext: obStep4 });
   }
 
   function obStep4() {
     if (_ob.dismissed) return;
-    let nodeEl = null;
-    try {
-      const scale = spiderChart.scales.r;
-      const n = axisLabels.length;
-      const ai = 1;
-      const a = -Math.PI / 2 + (2 * Math.PI * ai) / n;
-      const val = members[activeMember].values[ai];
-      const ratio = val / 12;
-      const cx = scale.xCenter, cy = scale.yCenter, cr = scale.drawingArea;
-      const nx = cx + Math.cos(a) * cr * ratio;
-      const ny = cy + Math.sin(a) * cr * ratio;
-      const canvas = spiderChart.canvas;
-      const cr2 = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
-      const anchor = document.createElement('div');
-      anchor.style.cssText = `position:fixed;width:1px;height:1px;pointer-events:none;top:${cr2.top + ny * cr2.height / (canvas.height / dpr)}px;left:${cr2.left + nx * cr2.width / (canvas.width / dpr)}px`;
-      document.body.appendChild(anchor);
-      nodeEl = anchor;
-      setTimeout(() => anchor.remove(), 3000);
-    } catch(e) { nodeEl = spiderChart?.canvas; }
-    if (!nodeEl) { obStep5(); return; }
-    _obShow({ targetEl: nodeEl, message: 'Grab this and drag to change units', hasNext: true, onNext: obStep5 });
+
+    // Compute C1 node screen position from chart — live on scroll
+    function getC1Anchor() {
+      try {
+        const scale = spiderChart.scales.r;
+        const n     = axisLabels.length;
+        const ai    = 1; // C1
+        const a     = -Math.PI / 2 + (2 * Math.PI * ai) / n;
+        const val   = members[activeMember].values[ai];
+        const ratio = val / 12;
+        const nx    = scale.xCenter + Math.cos(a) * scale.drawingArea * ratio;
+        const ny    = scale.yCenter + Math.sin(a) * scale.drawingArea * ratio;
+        const canvas = spiderChart.canvas;
+        const cr2    = canvas.getBoundingClientRect();
+        const dpr    = window.devicePixelRatio || 1;
+        return {
+          top:    cr2.top  + ny * cr2.height / (canvas.height / dpr),
+          left:   cr2.left + nx * cr2.width  / (canvas.width  / dpr),
+          width:  0, height: 0
+        };
+      } catch(e) { return null; }
+    }
+
+    const pos = getC1Anchor();
+    if (!pos) { obStep5(); return; }
+
+    // Create a virtual anchor that repositions on scroll
+    const anchor = { getBoundingClientRect: () => getC1Anchor() || { top:0,left:0,width:0,height:0 } };
+    _ob._c1Anchor = anchor;
+    _obShow({ targetEl: anchor, message: 'Grab & drag any nodes to edit', hasNext: true, onNext: obStep5 });
   }
 
   function obStep5() {
@@ -2780,14 +2794,14 @@
     if (_ob.mergeUsed) { obStep6(); return; }
     const toggle = document.querySelector('.opaque-toggle');
     if (!toggle) return;
-    _obShow({ targetEl: toggle, message: 'Turn on this switch to see a merged view of your team members.', hasNext: true, onNext: obStep6 });
+    _obShow({ targetEl: toggle, message: 'Merge/Unmerge view of the graph.', hasNext: true, onNext: obStep6 });
   }
 
   function obStep6() {
     if (_ob.dismissed) return;
     const infoBtn = document.querySelector('.notif-bell');
     if (!infoBtn) return;
-    _obShow({ targetEl: infoBtn, message: 'Explore the full guide for mastering Deejay-Graph here.', hasNext: false, isLast: true });
+    _obShow({ targetEl: infoBtn, message: 'Find the full guide inside.', hasNext: false, isLast: true });
   }
 
   function obRestart() {
