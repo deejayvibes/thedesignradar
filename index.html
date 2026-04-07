@@ -2631,7 +2631,7 @@
     const msgSize    = isMob ? '0.95rem' : '0.82rem';
     const btnSize    = isMob ? '0.85rem' : '0.72rem';
     const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
-    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">NEXT</button>`;
+    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem calc(0.65rem + 6px);font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">NEXT</button>`;
     const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
     const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
 
@@ -2639,7 +2639,7 @@
       ${image ? `<img src="${image}" style="width:100%;border-radius:4px;margin-bottom:0.55rem;display:block">` : ''}
       <div style="margin-bottom:0.65rem;letter-spacing:0.02em;font-size:${msgSize}">${message}</div>
       <div style="display:flex;gap:0.45rem;align-items:center;justify-content:flex-end">
-        ${hasNext ? skipBtn + nextBtn : isLast ? restartBtn + closeBtn : closeBtn}
+        ${hasNext ? skipBtn + nextBtn : closeBtn}
       </div>
       <div id="ob-arrow" style="position:absolute;width:10px;height:10px;background:rgba(15,16,22,1);border:1px solid #ffdc32;transform:rotate(45deg);pointer-events:none;animation:ob-arrow-pulse 1.2s ease-in-out infinite"></div>
     `;
@@ -2651,9 +2651,6 @@
     if (hasNext) {
       tip.querySelector('#ob-next').onclick = () => { _clearAuto(); _obDismiss(); setTimeout(() => { _ob.dismissed = false; onNext && onNext(); }, 50); };
       tip.querySelector('#ob-skip').onclick = () => { _clearAuto(); _obDismiss(); };
-    } else if (isLast) {
-      tip.querySelector('#ob-close').onclick   = () => { _clearAuto(); _obDismiss(); };
-      tip.querySelector('#ob-restart').onclick = () => { _clearAuto(); obRestart(); };
     } else {
       tip.querySelector('#ob-close').onclick = () => { _clearAuto(); _obDismiss(); };
     }
@@ -2786,7 +2783,7 @@
     // Create a virtual anchor that repositions on scroll
     const anchor = { getBoundingClientRect: () => getC1Anchor() || { top:0,left:0,width:0,height:0 } };
     _ob._c1Anchor = anchor;
-    _obShow({ targetEl: anchor, message: 'Grab & drag any nodes to edit', hasNext: true, onNext: obStep5 });
+    _obShow({ targetEl: anchor, message: 'Drag any node to edit.', hasNext: true, onNext: obStep5 });
   }
 
   function obStep5() {
@@ -2805,9 +2802,10 @@
   }
 
   function obRestart() {
-    _ob.dismissed = false;
-    _ob.eyeUsed   = false;
-    _ob.mergeUsed = false;
+    _ob.dismissed   = false;
+    _ob.eyeUsed     = false;
+    _ob.mergeUsed   = false;
+    _ob.memberAdded = false;
     const old = document.getElementById('ob-tip');
     if (old) old.remove();
     obStep1();
