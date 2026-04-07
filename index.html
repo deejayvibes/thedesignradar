@@ -691,6 +691,11 @@
     .member-tab:hover .tab-remove,
     .member-tab.active .tab-remove { opacity: 1; }
 
+    @keyframes ob-arrow-pulse {
+      0%, 100% { transform: rotate(45deg) scale(1);   opacity: 1; }
+      50%       { transform: rotate(45deg) scale(1.6); opacity: 1; }
+    }
+
     @keyframes gloss {
       0%   { left: -60%; opacity: 0; }
       5%   { opacity: 1; }
@@ -1332,14 +1337,6 @@
   }
 
   window.addEventListener('resize', drawExtensionLines);
-
-  window.addEventListener('beforeunload', e => {
-    const hasChanges = members.some(m => m.values.some(v => v !== 6));
-    if (hasChanges) {
-      e.preventDefault();
-      e.returnValue = '';
-    }
-  });
 
   // ── Tabs ──
   function renderTabs() {
@@ -2581,6 +2578,229 @@
     document.getElementById('notifBackdrop').classList.remove('open');
     document.body.style.overflow = '';
   }
+
+  const _obDeleteImg = 'data:image/png;base64,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';
+
+  // ── Onboarding ──────────────────────────────────────────────────────────
+  const _ob = { eyeUsed: false, mergeUsed: false, memberAdded: false, dismissed: false };
+
+  // Track actions via capture-phase delegation
+  document.addEventListener('click', e => {
+    if (e.target.closest('.section-eye-btn')) _ob.eyeUsed = true;
+    if (e.target.closest('.opaque-toggle'))   _ob.mergeUsed = true;
+    if (e.target.closest('.add-member-btn'))  { _ob.memberAdded = true; _obDismiss(); }
+  }, true);
+
+  function _obDismiss() {
+    _ob.dismissed = true;
+    const t = document.getElementById('ob-tip');
+    if (t) { t.style.opacity = '0'; setTimeout(() => t && t.remove(), 200); }
+  }
+
+  function _obShow({ targetEl, message, hasNext, onNext, isLast, image }) {
+    const old = document.getElementById('ob-tip');
+    if (old) old.remove();
+    if (_ob.dismissed) return;
+
+    const tip = document.createElement('div');
+    tip.id = 'ob-tip';
+    tip.style.cssText = [
+      'position:fixed',
+      'z-index:99999',
+      'background:rgba(15,16,22,1)',
+      'border:1px solid #ffdc32',
+      'border-radius:6px',
+      'padding:0.75rem 1rem',
+      'max-width:210px',
+      'box-shadow:0 4px 24px rgba(0,0,0,0.6)',
+      'font-family:var(--font-mono)',
+      'font-size:0.68rem',
+      'color:var(--text)',
+      'line-height:1.55',
+      'opacity:0',
+      'transition:opacity 0.22s ease',
+      'top:-9999px',
+      'left:-9999px',
+      'pointer-events:auto',
+    ].join(';');
+
+    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">SKIP ALL</button>`;
+    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">GOT IT</button>`;
+    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:0.72rem;font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
+    const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
+
+    tip.innerHTML = `
+      ${image ? `<img src="${image}" style="width:100%;border-radius:4px;margin-bottom:0.55rem;display:block">` : ''}
+      <div style="margin-bottom:0.65rem;letter-spacing:0.02em;font-size:0.82rem">${message}</div>
+      <div style="display:flex;gap:0.45rem;align-items:center;justify-content:flex-end">
+        ${hasNext ? skipBtn + nextBtn : isLast ? restartBtn + closeBtn : closeBtn}
+      </div>
+      <div id="ob-arrow" style="position:absolute;width:10px;height:10px;background:rgba(15,16,22,1);border:1px solid #ffdc32;transform:rotate(45deg);pointer-events:none;animation:ob-arrow-pulse 1.2s ease-in-out infinite"></div>
+    `;
+    document.body.appendChild(tip);
+
+    const _autoTimer = setTimeout(_obDismiss, 60000);
+    const _clearAuto = () => clearTimeout(_autoTimer);
+
+    if (hasNext) {
+      tip.querySelector('#ob-next').onclick = () => { _clearAuto(); _obDismiss(); setTimeout(() => { _ob.dismissed = false; onNext && onNext(); }, 50); };
+      tip.querySelector('#ob-skip').onclick = () => { _clearAuto(); _obDismiss(); };
+    } else if (isLast) {
+      tip.querySelector('#ob-close').onclick   = () => { _clearAuto(); _obDismiss(); };
+      tip.querySelector('#ob-restart').onclick = () => { _clearAuto(); obRestart(); };
+    } else {
+      tip.querySelector('#ob-close').onclick = () => { _clearAuto(); _obDismiss(); };
+    }
+
+    // Position after paint
+    requestAnimationFrame(() => {
+      if (!targetEl) { tip.remove(); return; }
+      const ar  = targetEl.getBoundingClientRect();
+      const tw  = tip.offsetWidth  || 210;
+      const th  = tip.offsetHeight || 90;
+      const gap = 10;
+      const arrowEl = document.getElementById('ob-arrow');
+      let top, left, arrowCSS;
+
+      // Arrow centre X relative to tooltip left
+      const arrowX = (anchorX) => Math.max(12, Math.min(tw - 20, anchorX - left - 5));
+
+      // Prefer above, fallback below, fallback right
+      if (ar.top - th - gap > 0) {
+        top  = ar.top - th - gap;
+        left = ar.left + ar.width / 2 - tw / 2;
+        left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+        // Arrow at bottom of tip, pointing downward (rotated so bottom-right corner faces down)
+        const ax = arrowX(ar.left + ar.width / 2);
+        arrowCSS = `bottom:-6px;left:${ax}px;border-top:none;border-left:none;`;
+      } else if (ar.bottom + th + gap < window.innerHeight) {
+        top  = ar.bottom + gap;
+        left = ar.left + ar.width / 2 - tw / 2;
+        left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+        // Arrow at top of tip, pointing upward
+        const ax = arrowX(ar.left + ar.width / 2);
+        arrowCSS = `top:-6px;left:${ax}px;border-bottom:none;border-right:none;`;
+      } else {
+        top  = ar.top + ar.height / 2 - th / 2;
+        left = ar.right + gap;
+        left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+        arrowCSS = `top:${th/2-5}px;left:-6px;border-right:none;border-top:none;`;
+      }
+
+      top = Math.max(8, Math.min(window.innerHeight - th - 8, top));
+
+      tip.style.top  = top  + 'px';
+      tip.style.left = left + 'px';
+      if (arrowEl) arrowEl.style.cssText += arrowCSS;
+
+      // Store anchor for scroll-tracking on mobile
+      tip._anchorEl  = targetEl;
+
+      requestAnimationFrame(() => { tip.style.opacity = '1'; });
+    });
+  }
+
+  // Keep tooltip anchored to its target on scroll (mobile)
+  window.addEventListener('scroll', () => {
+    const tip = document.getElementById('ob-tip');
+    if (!tip || !tip._anchorEl) return;
+    const ar   = tip._anchorEl.getBoundingClientRect();
+    const tw   = tip.offsetWidth;
+    const th   = tip.offsetHeight;
+    const gap  = 10;
+    let top, left;
+    if (ar.top - th - gap > 0) {
+      top  = ar.top - th - gap;
+      left = ar.left + ar.width / 2 - tw / 2;
+    } else {
+      top  = ar.bottom + gap;
+      left = ar.left + ar.width / 2 - tw / 2;
+    }
+    left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+    top  = Math.max(8, Math.min(window.innerHeight - th - 8, top));
+    tip.style.top  = top  + 'px';
+    tip.style.left = left + 'px';
+  }, { passive: true });
+
+  function obStep1() {
+    if (_ob.dismissed || _ob.memberAdded) return;
+    const btn = document.querySelector('.add-member-btn');
+    if (!btn) return;
+    _obShow({ targetEl: btn, message: 'You can add a new member from here', hasNext: true, onNext: obStep2 });
+  }
+
+  function obStep2() {
+    if (_ob.dismissed) return;
+    const capsule = document.querySelector('.member-tab');
+    if (!capsule) { obStep3(); return; }
+    _obShow({
+      targetEl: capsule,
+      message: "Double-tap to rename.",
+      hasNext: true,
+      onNext: obStep3
+    });
+  }
+
+  function obStep3() {
+    if (_ob.dismissed) return;
+    if (_ob.eyeUsed) { obStep4(); return; }
+    const eye = document.getElementById('eyeBtn0');
+    if (!eye) return;
+    _obShow({ targetEl: eye, message: 'You can hide a member from here', hasNext: true, onNext: obStep4 });
+  }
+
+  function obStep4() {
+    if (_ob.dismissed) return;
+    let nodeEl = null;
+    try {
+      const scale = spiderChart.scales.r;
+      const n = axisLabels.length;
+      const ai = 1;
+      const a = -Math.PI / 2 + (2 * Math.PI * ai) / n;
+      const val = members[activeMember].values[ai];
+      const ratio = val / 12;
+      const cx = scale.xCenter, cy = scale.yCenter, cr = scale.drawingArea;
+      const nx = cx + Math.cos(a) * cr * ratio;
+      const ny = cy + Math.sin(a) * cr * ratio;
+      const canvas = spiderChart.canvas;
+      const cr2 = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const anchor = document.createElement('div');
+      anchor.style.cssText = `position:fixed;width:1px;height:1px;pointer-events:none;top:${cr2.top + ny * cr2.height / (canvas.height / dpr)}px;left:${cr2.left + nx * cr2.width / (canvas.width / dpr)}px`;
+      document.body.appendChild(anchor);
+      nodeEl = anchor;
+      setTimeout(() => anchor.remove(), 3000);
+    } catch(e) { nodeEl = spiderChart?.canvas; }
+    if (!nodeEl) { obStep5(); return; }
+    _obShow({ targetEl: nodeEl, message: 'Grab this and drag to change units', hasNext: true, onNext: obStep5 });
+  }
+
+  function obStep5() {
+    if (_ob.dismissed) return;
+    if (_ob.mergeUsed) { obStep6(); return; }
+    const toggle = document.querySelector('.opaque-toggle');
+    if (!toggle) return;
+    _obShow({ targetEl: toggle, message: 'Turn on this switch to see a merged view of your team members.', hasNext: true, onNext: obStep6 });
+  }
+
+  function obStep6() {
+    if (_ob.dismissed) return;
+    const infoBtn = document.querySelector('.notif-bell');
+    if (!infoBtn) return;
+    _obShow({ targetEl: infoBtn, message: 'Explore the full guide for mastering Deejay-Graph here.', hasNext: false, isLast: true });
+  }
+
+  function obRestart() {
+    _ob.dismissed = false;
+    _ob.eyeUsed   = false;
+    _ob.mergeUsed = false;
+    const old = document.getElementById('ob-tip');
+    if (old) old.remove();
+    obStep1();
+  }
+
+  setTimeout(() => { if (!_ob.dismissed && !_ob.memberAdded) obStep1(); }, 40000);
+
 </script>
 
 
