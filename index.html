@@ -1371,7 +1371,7 @@
             onkeydown="if(event.key==='Enter'){this.blur()}"
             title=""
           />
-          ${members.length > 1 && members[i].visible ? `<button class="tab-remove" onclick="removeMember(${i},event)">×</button>` : ''}
+          ${members[i].visible ? `<button class="tab-remove" onclick="${members.length > 1 ? `removeMember(${i},event)` : `showCapsuleCallout(this.closest('.member-tab'),'Cannot delete the sole member.');event.stopPropagation()`}">×</button>` : ''}
         `;
         tabsEl.appendChild(tab);
 
@@ -1856,7 +1856,45 @@
     }
   }
 
-  // Reposition visible notifications on scroll so they follow their anchor elements
+  let _capsuleCalloutAnchor = null;
+
+  function showCapsuleCallout(anchorEl, msg) {
+    _capsuleCalloutAnchor = anchorEl;
+    const isMobile = window.innerWidth <= 999;
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const callout = document.getElementById('eyeCallout');
+      if (!callout) return;
+      callout.textContent = msg;
+      callout.classList.remove('show');
+      void callout.offsetWidth;
+      const rect     = anchorEl.getBoundingClientRect();
+      const calloutW = callout.offsetWidth || 160;
+      const calloutH = callout.offsetHeight || 28;
+      const margin   = 8;
+      const scrollY  = window.scrollY || window.pageYOffset;
+      const scrollX  = window.scrollX || window.pageXOffset;
+      const topBase  = isMobile ? rect.top + scrollY : rect.top;
+      const leftBase = isMobile ? rect.left + scrollX : rect.left;
+      let top  = topBase - calloutH - 16;
+      let left = leftBase + rect.width / 2 - calloutW / 2;
+      const maxLeft = window.innerWidth - calloutW - margin + (isMobile ? scrollX : 0);
+      left = Math.max(margin + (isMobile ? scrollX : 0), Math.min(maxLeft, left));
+      top  = Math.max(margin + (isMobile ? scrollY : 0), top);
+      const centrX    = rect.left + rect.width / 2;
+      const arrowLeft = Math.max(10, Math.min(calloutW - 10, centrX - (left - (isMobile ? scrollX : 0))));
+      callout.style.top        = top + 'px';
+      callout.style.left       = left + 'px';
+      callout.style.setProperty('--arrow-left', arrowLeft + 'px');
+      callout.style.visibility = '';
+      callout.classList.add('show');
+      clearTimeout(_eyeCalloutTimer);
+      _eyeCalloutTimer = setTimeout(() => {
+        callout.classList.remove('show');
+        _capsuleCalloutAnchor = null;
+      }, 2500);
+    }));
+  }
   function _repositionNotifications() {
     if (window.innerWidth > 999) return;
     const callout = document.getElementById('eyeCallout');
@@ -1864,9 +1902,9 @@
 
     // eyeCallout is position:absolute — use pageY coords
     if (callout && callout.classList.contains('show')) {
-      const eyeBtn = document.getElementById('eyeBtn0') || document.getElementById('eyeBtn2');
-      if (eyeBtn) {
-        const rect     = eyeBtn.getBoundingClientRect();
+      const anchor = _capsuleCalloutAnchor || document.getElementById('eyeBtn0') || document.getElementById('eyeBtn2');
+      if (anchor) {
+        const rect     = anchor.getBoundingClientRect();
         const scrollY  = window.scrollY || window.pageYOffset;
         const scrollX  = window.scrollX || window.pageXOffset;
         const calloutW = callout.offsetWidth || 160;
@@ -2642,7 +2680,7 @@
     const btnSize    = isMob ? '0.85rem' : '0.72rem';
     const nextBtn    = `<button id="ob-next" style="background:#ffdc32;border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Next</button>`;
     const closeBtn   = `<button id="ob-close" style="background:#ffdc32;border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
-    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid #ffdc32;border-radius:3px;padding:0 0.6rem;height:28px;font-family:var(--font-mono);font-size:${btnSize};color:#ffdc32;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
+    const skipBtn    = `<button id="ob-skip" style="background:none;border:none;border-radius:3px;padding:0 0.6rem;height:28px;font-family:var(--font-mono);font-size:${btnSize};color:#ffdc32;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
     const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
 
     tip.innerHTML = `
@@ -2735,7 +2773,7 @@
     if (!capsule) { obStep3(); return; }
     _obShow({
       targetEl: capsule,
-      message: "Double-tap to rename & X to delete.",
+      message: "Double-tap to rename & tap on x to delete.",
       hasNext: true,
       onNext: obStep3
     });
