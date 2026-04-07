@@ -712,7 +712,7 @@
       color: #000;
       font-size: 0.72rem;
       cursor: pointer;
-      transition: all 0.18s;
+      transition: filter 0.18s, border-color 0.18s;
       line-height: 1;
       display: flex;
       align-items: center;
@@ -741,7 +741,7 @@
       animation-delay: 1.8s;
       pointer-events: none;
     }
-    .add-member-btn:hover { background: #5de89a; border-color: #5de89a; }
+    .add-member-btn:hover { filter: brightness(0.88); border-color: var(--accent); }
     .add-member-btn:hover::before { animation-play-state: paused; opacity: 0; }
     .add-member-btn .plus { color: #000; font-size: 1rem; font-weight: 300; line-height: 1; }
 
