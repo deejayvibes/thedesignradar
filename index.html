@@ -2606,7 +2606,7 @@
     const tip = document.createElement('div');
     tip.id = 'ob-tip';
     tip.style.cssText = [
-      'position:fixed',
+      'position:absolute',
       'z-index:99999',
       'background:rgba(15,16,22,1)',
       'border:1px solid #ffdc32',
@@ -2630,9 +2630,9 @@
     const isMob      = window.innerWidth <= 999;
     const msgSize    = isMob ? '0.95rem' : '0.82rem';
     const btnSize    = isMob ? '0.85rem' : '0.72rem';
-    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
-    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem calc(0.65rem + 10px);font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">NEXT</button>`;
-    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem calc(0.65rem + 10px);font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
+    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Next</button>`;
+    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0 calc(0.65rem + 10px);height:28px;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
+    const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0 0.6rem;height:28px;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap;line-height:1;display:inline-flex;align-items:center">Close</button>`;
     const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
 
     tip.innerHTML = `
@@ -2665,30 +2665,31 @@
         const th  = tip.offsetHeight || 90;
         const gap = 10;
         const arrowEl = document.getElementById('ob-arrow');
+        const scrollY = window.scrollY || window.pageYOffset;
+        const scrollX = window.scrollX || window.pageXOffset;
         let top, left, arrowCSS;
 
-        const arrowX = (anchorX) => Math.max(12, Math.min(tw - 20, anchorX - left - 5));
+        const arrowX = (anchorX) => Math.max(12, Math.min(tw - 20, anchorX - left + scrollX - 5));
 
         if (ar.top - th - gap > 0) {
-          top  = ar.top - th - gap;
-          left = ar.left + ar.width / 2 - tw / 2;
-          left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+          top  = ar.top + scrollY - th - gap;
+          left = ar.left + scrollX + ar.width / 2 - tw / 2;
+          left = Math.max(8 + scrollX, Math.min(window.innerWidth - tw - 8 + scrollX, left));
           const ax = arrowX(ar.left + ar.width / 2);
           arrowCSS = `bottom:-6px;left:${ax}px;border-top:none;border-left:none;`;
         } else if (ar.bottom + th + gap < window.innerHeight) {
-          top  = ar.bottom + gap;
-          left = ar.left + ar.width / 2 - tw / 2;
-          left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+          top  = ar.bottom + scrollY + gap;
+          left = ar.left + scrollX + ar.width / 2 - tw / 2;
+          left = Math.max(8 + scrollX, Math.min(window.innerWidth - tw - 8 + scrollX, left));
           const ax = arrowX(ar.left + ar.width / 2);
           arrowCSS = `top:-6px;left:${ax}px;border-bottom:none;border-right:none;`;
         } else {
-          top  = ar.top + ar.height / 2 - th / 2;
-          left = ar.right + gap;
-          left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+          top  = ar.top + scrollY + ar.height / 2 - th / 2;
+          left = ar.right + scrollX + gap;
+          left = Math.max(8 + scrollX, Math.min(window.innerWidth - tw - 8 + scrollX, left));
           arrowCSS = `top:${th/2-5}px;left:-6px;border-right:none;border-top:none;`;
         }
 
-        top = Math.max(8, Math.min(window.innerHeight - th - 8, top));
         tip.style.top  = top  + 'px';
         tip.style.left = left + 'px';
         if (arrowEl) arrowEl.style.cssText += arrowCSS;
@@ -2709,27 +2710,7 @@
     }
   }
 
-  // Keep tooltip anchored to its target on scroll (mobile)
-  window.addEventListener('scroll', () => {
-    const tip = document.getElementById('ob-tip');
-    if (!tip || !tip._anchorEl) return;
-    const ar   = tip._anchorEl.getBoundingClientRect();
-    const tw   = tip.offsetWidth;
-    const th   = tip.offsetHeight;
-    const gap  = 10;
-    let top, left;
-    if (ar.top - th - gap > 0) {
-      top  = ar.top - th - gap;
-      left = ar.left + ar.width / 2 - tw / 2;
-    } else {
-      top  = ar.bottom + gap;
-      left = ar.left + ar.width / 2 - tw / 2;
-    }
-    left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
-    top  = Math.max(8, Math.min(window.innerHeight - th - 8, top));
-    tip.style.top  = top  + 'px';
-    tip.style.left = left + 'px';
-  }, { passive: true });
+  // Tooltip is position:absolute — scrolls naturally with page, no repositioning needed
 
   function obStep1() {
     if (_ob.dismissed || _ob.memberAdded) return;
