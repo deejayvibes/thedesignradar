@@ -2598,7 +2598,7 @@
     if (t) { t.style.opacity = '0'; setTimeout(() => t && t.remove(), 200); }
   }
 
-  function _obShow({ targetEl, message, hasNext, onNext, isLast, image }) {
+  function _obShow({ targetEl, message, hasNext, onNext, isLast, image, scrollTarget }) {
     const old = document.getElementById('ob-tip');
     if (old) old.remove();
     if (_ob.dismissed) return;
@@ -2631,8 +2631,8 @@
     const msgSize    = isMob ? '0.95rem' : '0.82rem';
     const btnSize    = isMob ? '0.85rem' : '0.72rem';
     const skipBtn    = `<button id="ob-skip" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
-    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem calc(0.65rem + 6px);font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">NEXT</button>`;
-    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem 0.65rem;font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
+    const nextBtn    = `<button id="ob-next" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem calc(0.65rem + 10px);font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">NEXT</button>`;
+    const closeBtn   = `<button id="ob-close" style="background:var(--accent);border:none;border-radius:3px;padding:0.28rem calc(0.65rem + 10px);font-family:var(--font-mono);font-size:${btnSize};font-weight:700;color:#000;cursor:pointer;letter-spacing:0.08em;white-space:nowrap">CLOSE</button>`;
     const restartBtn = `<button id="ob-restart" style="background:none;border:1px solid var(--muted);border-radius:3px;padding:0.28rem 0.6rem;font-family:var(--font-mono);font-size:${btnSize};color:var(--muted);cursor:pointer;letter-spacing:0.08em;white-space:nowrap">RESTART TIPS</button>`;
 
     tip.innerHTML = `
@@ -2645,62 +2645,68 @@
     `;
     document.body.appendChild(tip);
 
-    const _autoTimer = setTimeout(_obDismiss, 60000);
-    const _clearAuto = () => clearTimeout(_autoTimer);
+    // If target is off-screen, scroll it into view first then position/show
+    const _showAfterScroll = () => {
+      const _autoTimer = setTimeout(_obDismiss, 60000);
+      const _clearAuto = () => clearTimeout(_autoTimer);
 
-    if (hasNext) {
-      tip.querySelector('#ob-next').onclick = () => { _clearAuto(); _obDismiss(); setTimeout(() => { _ob.dismissed = false; onNext && onNext(); }, 50); };
-      tip.querySelector('#ob-skip').onclick = () => { _clearAuto(); _obDismiss(); };
-    } else {
-      tip.querySelector('#ob-close').onclick = () => { _clearAuto(); _obDismiss(); };
-    }
-
-    // Position after paint
-    requestAnimationFrame(() => {
-      if (!targetEl) { tip.remove(); return; }
-      const ar  = targetEl.getBoundingClientRect();
-      const tw  = tip.offsetWidth  || 210;
-      const th  = tip.offsetHeight || 90;
-      const gap = 10;
-      const arrowEl = document.getElementById('ob-arrow');
-      let top, left, arrowCSS;
-
-      // Arrow centre X relative to tooltip left
-      const arrowX = (anchorX) => Math.max(12, Math.min(tw - 20, anchorX - left - 5));
-
-      // Prefer above, fallback below, fallback right
-      if (ar.top - th - gap > 0) {
-        top  = ar.top - th - gap;
-        left = ar.left + ar.width / 2 - tw / 2;
-        left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
-        // Arrow at bottom of tip, pointing downward (rotated so bottom-right corner faces down)
-        const ax = arrowX(ar.left + ar.width / 2);
-        arrowCSS = `bottom:-6px;left:${ax}px;border-top:none;border-left:none;`;
-      } else if (ar.bottom + th + gap < window.innerHeight) {
-        top  = ar.bottom + gap;
-        left = ar.left + ar.width / 2 - tw / 2;
-        left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
-        // Arrow at top of tip, pointing upward
-        const ax = arrowX(ar.left + ar.width / 2);
-        arrowCSS = `top:-6px;left:${ax}px;border-bottom:none;border-right:none;`;
+      if (hasNext) {
+        tip.querySelector('#ob-next').onclick = () => { _clearAuto(); _obDismiss(); setTimeout(() => { _ob.dismissed = false; onNext && onNext(); }, 50); };
+        tip.querySelector('#ob-skip').onclick = () => { _clearAuto(); _obDismiss(); };
       } else {
-        top  = ar.top + ar.height / 2 - th / 2;
-        left = ar.right + gap;
-        left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
-        arrowCSS = `top:${th/2-5}px;left:-6px;border-right:none;border-top:none;`;
+        tip.querySelector('#ob-close').onclick = () => { _clearAuto(); _obDismiss(); };
       }
 
-      top = Math.max(8, Math.min(window.innerHeight - th - 8, top));
+      // Position after paint
+      requestAnimationFrame(() => {
+        if (!targetEl) { tip.remove(); return; }
+        const ar  = targetEl.getBoundingClientRect();
+        const tw  = tip.offsetWidth  || 210;
+        const th  = tip.offsetHeight || 90;
+        const gap = 10;
+        const arrowEl = document.getElementById('ob-arrow');
+        let top, left, arrowCSS;
 
-      tip.style.top  = top  + 'px';
-      tip.style.left = left + 'px';
-      if (arrowEl) arrowEl.style.cssText += arrowCSS;
+        const arrowX = (anchorX) => Math.max(12, Math.min(tw - 20, anchorX - left - 5));
 
-      // Store anchor for scroll-tracking on mobile
-      tip._anchorEl  = targetEl;
+        if (ar.top - th - gap > 0) {
+          top  = ar.top - th - gap;
+          left = ar.left + ar.width / 2 - tw / 2;
+          left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+          const ax = arrowX(ar.left + ar.width / 2);
+          arrowCSS = `bottom:-6px;left:${ax}px;border-top:none;border-left:none;`;
+        } else if (ar.bottom + th + gap < window.innerHeight) {
+          top  = ar.bottom + gap;
+          left = ar.left + ar.width / 2 - tw / 2;
+          left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+          const ax = arrowX(ar.left + ar.width / 2);
+          arrowCSS = `top:-6px;left:${ax}px;border-bottom:none;border-right:none;`;
+        } else {
+          top  = ar.top + ar.height / 2 - th / 2;
+          left = ar.right + gap;
+          left = Math.max(8, Math.min(window.innerWidth - tw - 8, left));
+          arrowCSS = `top:${th/2-5}px;left:-6px;border-right:none;border-top:none;`;
+        }
 
-      requestAnimationFrame(() => { tip.style.opacity = '1'; });
-    });
+        top = Math.max(8, Math.min(window.innerHeight - th - 8, top));
+        tip.style.top  = top  + 'px';
+        tip.style.left = left + 'px';
+        if (arrowEl) arrowEl.style.cssText += arrowCSS;
+        tip._anchorEl = targetEl;
+        requestAnimationFrame(() => { tip.style.opacity = '1'; });
+      });
+    };
+
+    // Check if target is off-screen; if so scroll it into view first
+    const _ar = targetEl ? targetEl.getBoundingClientRect() : null;
+    const _offScreen = _ar && (_ar.bottom < 0 || _ar.top > window.innerHeight);
+    const _scrollEl = scrollTarget || (targetEl?.scrollIntoView ? targetEl : null);
+    if (_offScreen && _scrollEl) {
+      _scrollEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(_showAfterScroll, 500);
+    } else {
+      _showAfterScroll();
+    }
   }
 
   // Keep tooltip anchored to its target on scroll (mobile)
@@ -2780,10 +2786,9 @@
     const pos = getC1Anchor();
     if (!pos) { obStep5(); return; }
 
-    // Create a virtual anchor that repositions on scroll
     const anchor = { getBoundingClientRect: () => getC1Anchor() || { top:0,left:0,width:0,height:0 } };
     _ob._c1Anchor = anchor;
-    _obShow({ targetEl: anchor, message: 'Drag any node to edit.', hasNext: true, onNext: obStep5 });
+    _obShow({ targetEl: anchor, scrollTarget: spiderChart?.canvas, message: 'Drag any node to edit.', hasNext: true, onNext: obStep5 });
   }
 
   function obStep5() {
