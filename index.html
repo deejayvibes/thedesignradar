@@ -2788,7 +2788,19 @@
 
     const anchor = { getBoundingClientRect: () => getC1Anchor() || { top:0,left:0,width:0,height:0 } };
     _ob._c1Anchor = anchor;
-    _obShow({ targetEl: anchor, scrollTarget: spiderChart?.canvas, message: 'Drag any node to edit.', hasNext: true, onNext: obStep5 });
+
+    // Check if C1 node is off-screen and scroll canvas into view first
+    const c1Pos = getC1Anchor();
+    const c1OffScreen = !c1Pos || c1Pos.top < 0 || c1Pos.top > window.innerHeight;
+    const canvas = spiderChart?.canvas;
+    if (c1OffScreen && canvas) {
+      canvas.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        if (!_ob.dismissed) _obShow({ targetEl: anchor, message: 'Drag any node to edit.', hasNext: true, onNext: obStep5 });
+      }, 500);
+    } else {
+      _obShow({ targetEl: anchor, message: 'Drag any node to edit.', hasNext: true, onNext: obStep5 });
+    }
   }
 
   function obStep5() {
