@@ -1333,6 +1333,14 @@
 
   window.addEventListener('resize', drawExtensionLines);
 
+  window.addEventListener('beforeunload', e => {
+    const hasChanges = members.some(m => m.values.some(v => v !== 6));
+    if (hasChanges) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
   // ── Tabs ──
   function renderTabs() {
     ['memberTabs', 'memberTabsDesktop'].forEach(containerId => {
