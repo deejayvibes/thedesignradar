@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <!--
   ============================================================
   The Deejay-Graph — Team Competency Radar
@@ -16,7 +17,6 @@
   For licensing enquiries, contact the author.
   ============================================================
 -->
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -1198,6 +1198,287 @@ const a0_0x53db2e=a0_0x267a;(function(_0x2c371e,_0x572f41){const _0x2add9e=a0_0x
   new MutationObserver(function(){requestAnimationFrame(patchAll);}).observe(document.body,{childList:true,subtree:true});
 })();
 </script>
+<style id="djVersionsCss">
+.dj-team{position:relative;display:inline-flex;align-items:center;min-width:0}
+.dj-team-btn{display:inline-flex;align-items:center;gap:.4rem;background:none;border:1px solid transparent;border-radius:6px;padding:.25rem .4rem;margin:-.25rem 0 -.25rem -.4rem;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;transition:border-color .15s,background .15s}
+.dj-team-btn:hover,.dj-team-btn[aria-expanded="true"]{border-color:var(--border);background:rgba(255,255,255,.04)}
+.dj-team-btn:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+.dj-team-name{white-space:nowrap}
+.dj-team-name.untitled{opacity:.75}
+.dj-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:none;flex-shrink:0}
+.dj-dirty .dj-dot{display:inline-block}
+.dj-caret{opacity:.6;transition:transform .15s;flex-shrink:0}
+.dj-team-btn[aria-expanded="true"] .dj-caret{transform:rotate(180deg)}
+.dj-menu{position:fixed;z-index:9999;min-width:236px;max-width:300px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.55);padding:.9rem .5rem .5rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;color:var(--text);display:none}
+.dj-menu.open{display:block}
+.dj-item{display:flex;align-items:center;gap:.6rem;width:100%;background:none;border:0;border-radius:6px;padding:.55rem .6rem;color:var(--text);font:inherit;letter-spacing:inherit;text-align:left;cursor:pointer}
+.dj-item:hover:not([disabled]){background:rgba(255,255,255,.06)}
+.dj-item[disabled]{opacity:.35;cursor:default}
+.dj-item svg{flex-shrink:0;color:var(--accent)}
+.dj-item .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dj-item .meta{color:var(--muted);font-size:.65rem;flex-shrink:0}
+.dj-item.current{background:rgba(127,255,178,.08)}
+.dj-sep{height:1px;background:var(--border);margin:.6rem .3rem .4rem}
+.dj-heading{color:var(--muted);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:.4rem .6rem .25rem}
+.dj-empty{color:var(--muted);padding:.45rem .6rem .5rem;font-size:.72rem}
+.dj-del{background:none;border:0;color:var(--muted);cursor:pointer;padding:2px 4px;border-radius:4px;font-size:.9rem;line-height:1;flex-shrink:0}
+.dj-del:hover{color:var(--accent3)}
+.dj-overlay{position:fixed;inset:0;z-index:10000;background:rgba(5,6,9,.68);display:none;align-items:center;justify-content:center;padding:1rem}
+.dj-overlay.open{display:flex}
+.dj-modal{width:min(380px,100%);background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.25rem;box-shadow:0 20px 60px rgba(0,0,0,.6);font-family:var(--font-mono);color:var(--text)}
+.dj-modal h3{margin:0 0 .35rem;font-family:var(--font-display);font-size:1rem;font-weight:700;letter-spacing:.02em}
+.dj-modal p{margin:0 0 1rem;color:var(--muted);font-size:.72rem;line-height:1.5;letter-spacing:.03em}
+.dj-modal input{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.65rem .75rem;color:var(--text);font-family:var(--font-mono);font-size:.85rem;outline:none;margin-bottom:1rem}
+.dj-modal input:focus{border-color:var(--accent)}
+.dj-hint{display:block;color:var(--muted);font-size:.64rem;margin-bottom:1rem;letter-spacing:.04em}
+.dj-actions{display:flex;gap:.5rem;justify-content:flex-end}
+.dj-btn{border-radius:8px;padding:.55rem .95rem;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border);background:none;color:var(--text)}
+.dj-btn:hover{border-color:var(--muted)}
+.dj-btn.primary{background:var(--accent);border-color:var(--accent);color:#000;font-weight:500}
+.dj-btn.primary:hover{filter:brightness(.9)}
+.dj-btn[disabled]{opacity:.4;cursor:default;filter:none}
+.dj-err{display:none;color:var(--accent3);font-size:.68rem;letter-spacing:.04em;margin:-.35rem 0 .9rem}
+.dj-err.show{display:block}
+.dj-modal input.invalid{border-color:var(--accent3);animation:djShake .3s}
+@keyframes djShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.dj-toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,12px);z-index:10001;background:var(--surface);border:1px solid var(--accent);color:var(--text);font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;padding:.6rem .9rem;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.dj-toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+<script id="djVersionsPatch">
+/* Saved versions: UI layer. Backend plugs in through DJVersionsAdapter. */
+(function(){
+  var MAX_LABEL = 8;
+
+  /* ---- Adapter: persists to this browser's localStorage ---- */
+  var KEY = 'deejayGraph.versions.v1';
+  var memFallback = null, warned = false;
+  function readAll(){
+    if(memFallback) return memFallback;
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){ var d = JSON.parse(raw); if(d && Array.isArray(d.items)) return d.items; }
+    }catch(e){}
+    return [];
+  }
+  function writeAll(items){
+    try{ localStorage.setItem(KEY, JSON.stringify({v:1, items:items})); memFallback = null; return true; }
+    catch(e){
+      memFallback = items;
+      if(!warned){ warned = true; setTimeout(function(){ toast('Browser storage is blocked. Saves last until you close this tab.'); },0); }
+      return false;
+    }
+  }
+  function snapshot(){
+    return JSON.parse(JSON.stringify({members:members, activeMember:activeMember, used:Array.from(_usedColorIdxs), opaque:opaqueMode}));
+  }
+  function applySnap(sn){
+    if(!sn || !Array.isArray(sn.members) || !sn.members.length) return false;
+    members.splice(0, members.length);
+    sn.members.forEach(function(m){ members.push(m); });
+    _usedColorIdxs.clear();
+    (sn.used || []).forEach(function(i){ _usedColorIdxs.add(i); });
+    activeMember = Math.min(Math.max(0, sn.activeMember|0), members.length-1);
+    if(!!sn.opaque !== opaqueMode) toggleOpaque();
+    renderTabs(); renderPanel(); updateChart(); renderLegend();
+    return true;
+  }
+  window.DJVersionsAdapter = {
+    getSnapshot: snapshot,
+    applySnapshot: applySnap,
+    list: function(){ return Promise.resolve(readAll().slice().sort(function(a,b){return b.savedAt-a.savedAt;})); },
+    save: function(name, id){
+      var items = readAll().slice(), rec = null, i;
+      for(i=0;i<items.length;i++){ if(items[i].id===id){ rec = items[i]; break; } }
+      if(rec){ rec.name = name; rec.savedAt = Date.now(); rec.snapshot = snapshot(); }
+      else { rec = {id:'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:name, savedAt:Date.now(), snapshot:snapshot()}; items.push(rec); }
+      writeAll(items);
+      return Promise.resolve(rec);
+    },
+    load: function(id){
+      var rec = readAll().filter(function(r){return r.id===id;})[0];
+      if(!rec || !applySnap(rec.snapshot)) return Promise.resolve(null);
+      return Promise.resolve(rec);
+    },
+    remove: function(id){ writeAll(readAll().filter(function(r){return r.id!==id;})); return Promise.resolve(); }
+  };
+  var A = window.DJVersionsAdapter;
+
+  /* ---- State ---- */
+  var current = {id:null, name:''};
+  var dirty = false, baseline = '';
+  var labels = [];   // every name element
+  var wraps = [];
+
+  function short(n){ return n.length>MAX_LABEL ? n.slice(0,MAX_LABEL)+'\u2026' : n; }
+  function el(tag, cls, html){ var e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e; }
+  function esc(s){ return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function ago(t){ var s=(Date.now()-t)/1000; if(s<60)return 'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+
+  var toastEl = el('div','dj-toast'); var toastT;
+  function toast(msg){ toastEl.textContent=msg; toastEl.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(function(){toastEl.classList.remove('show');},2000); }
+
+  function render(){
+    labels.forEach(function(l){
+      l.textContent = current.name ? short(current.name) : 'Untitled team';
+      l.classList.toggle('untitled', !current.name);
+      l.parentNode.title = current.name || 'Untitled team';
+    });
+    wraps.forEach(function(w){ w.classList.toggle('dj-dirty', dirty); });
+  }
+  function setDirty(v){ if(dirty!==v){ dirty=v; render(); } }
+  function stateKey(){ try{ return JSON.stringify({m:members,o:opaqueMode}); }catch(e){ return ''; } }
+  function markClean(){ baseline = stateKey(); setDirty(false); }
+  function checkDirty(){ setDirty(stateKey() !== baseline); }
+
+  /* ---- Build trigger(s) ---- */
+  var caretSvg = '<svg class="dj-caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+  function makeTrigger(){
+    var w = el('span','dj-team');
+    var b = el('button','dj-team-btn','<span class="dj-team-name untitled">Untitled team</span><span class="dj-dot" aria-hidden="true"></span>'+caretSvg);
+    b.type='button'; b.setAttribute('aria-haspopup','menu'); b.setAttribute('aria-expanded','false');
+    w.appendChild(b); labels.push(b.querySelector('.dj-team-name')); wraps.push(w);
+    b.addEventListener('click', function(e){ e.stopPropagation(); toggleMenu(b); });
+    w.addEventListener('click', function(e){ e.stopPropagation(); });
+    return w;
+  }
+
+  /* ---- Menu ---- */
+  var menu = el('div','dj-menu'); menu.setAttribute('role','menu');
+  var anchor = null;
+  var icoSave='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>';
+  var icoPlus='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+
+  function buildMenu(){
+    menu.innerHTML='';
+    var saveBtn = el('button','dj-item',icoSave+'<span class="grow">'+(current.id?'Save':'Save this graph')+'</span>');
+    saveBtn.type='button'; saveBtn.setAttribute('role','menuitem');
+    saveBtn.onclick=function(){ closeMenu(); if(current.id){ doSave(current.name,current.id); } else { askName({title:'Save this graph',text:'Give this team a name. You can restore it later.',cta:'Save'}).then(function(n){ if(n) doSave(n,null); }); } };
+    menu.appendChild(saveBtn);
+    if(current.id){
+      var sa = el('button','dj-item',icoPlus+'<span class="grow">Save as\u2026</span>');
+      sa.type='button'; sa.setAttribute('role','menuitem');
+      sa.onclick=function(){ closeMenu(); askName({title:'Save as new',text:'Creates a separate saved graph. The current one stays as it is.',cta:'Save',value:current.name+' copy'}).then(function(n){ if(n) doSave(n,null); }); };
+      menu.appendChild(sa);
+    }
+    menu.appendChild(el('div','dj-sep'));
+    var holder = el('div'); menu.appendChild(holder);
+    A.list().then(function(items){
+      if(!items.length){ holder.appendChild(el('div','dj-empty','No graphs saved yet')); return; }
+      holder.appendChild(el('div','dj-heading','Saved graphs'));
+      items.forEach(function(r){
+        var row = el('div','dj-item'+(r.id===current.id?' current':''));
+        row.setAttribute('role','menuitem'); row.tabIndex=0;
+        row.innerHTML='<span class="grow">'+esc(r.name)+'</span><span class="meta">'+ago(r.savedAt)+'</span>';
+        var del = el('button','dj-del','\u00d7'); del.type='button'; del.title='Delete'; del.setAttribute('aria-label','Delete '+r.name);
+        del.onclick=function(e){ e.stopPropagation(); A.remove(r.id).then(function(){ if(current.id===r.id){ current={id:null,name:''}; checkDirty(); render(); } buildMenu(); place(); toast('Deleted'); }); };
+        row.appendChild(del);
+        var open=function(){ confirmDiscard().then(function(ok){ if(!ok) return; closeMenu(); A.load(r.id).then(function(rec){ if(!rec) return; current={id:rec.id,name:rec.name}; markClean(); render(); toast('Restored \u201c'+short(rec.name)+'\u201d'); }); }); };
+        row.onclick=open; row.onkeydown=function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(); } };
+        holder.appendChild(row);
+      });
+      place();
+    });
+  }
+  function place(){
+    if(!anchor) return;
+    var r = anchor.getBoundingClientRect();
+    var w = menu.offsetWidth||236;
+    var left = Math.max(8, Math.min(r.left, window.innerWidth-w-8));
+    menu.style.left=left+'px';
+    var h = menu.offsetHeight, below = window.innerHeight-r.bottom-12;
+    menu.style.top = (h>below && r.top>h+12 ? r.top-h-6 : r.bottom+6)+'px';
+    menu.style.maxHeight = Math.max(160, window.innerHeight-24)+'px'; menu.style.overflowY='auto';
+  }
+  function openMenu(btn){ anchor=btn; buildMenu(); menu.classList.add('open'); btn.setAttribute('aria-expanded','true'); place(); }
+  function closeMenu(){ menu.classList.remove('open'); if(anchor) anchor.setAttribute('aria-expanded','false'); anchor=null; }
+  function toggleMenu(btn){ (menu.classList.contains('open') && anchor===btn) ? closeMenu() : (closeMenu(), openMenu(btn)); }
+  document.addEventListener('click', function(e){ if(menu.classList.contains('open') && !menu.contains(e.target)) closeMenu(); });
+  window.addEventListener('resize', function(){ if(menu.classList.contains('open')) place(); });
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+
+  /* ---- Modal ---- */
+  var overlay = el('div','dj-overlay'); overlay.setAttribute('role','dialog'); overlay.setAttribute('aria-modal','true');
+  var pending = null;
+  function showModal(html, onReady){
+    overlay.innerHTML='<div class="dj-modal">'+html+'</div>'; overlay.classList.add('open');
+    onReady(overlay.querySelector('.dj-modal'));
+  }
+  function hideModal(){ overlay.classList.remove('open'); overlay.innerHTML=''; }
+  function askName(o){
+    return new Promise(function(resolve){
+      showModal('<h3>'+esc(o.title)+'</h3><p>Your progress is saved locally. Clearing your browser data will erase it.</p><input type="text" maxlength="40" placeholder="e.g. Q1 squad" autocomplete="off" /><span class="dj-err" role="alert">Give this graph a name to save it.</span><div class="dj-actions"><button type="button" class="dj-btn" data-a="cancel">Cancel</button><button type="button" class="dj-btn primary" data-a="ok">'+esc(o.cta||'Save')+'</button></div>', function(m){
+        var inp=m.querySelector('input'), ok=m.querySelector('[data-a=ok]');
+        var err=m.querySelector('.dj-err');
+        function nudge(){ err.classList.add('show'); inp.classList.remove('invalid'); void inp.offsetWidth; inp.classList.add('invalid'); inp.focus(); }
+        inp.value=o.value||''; setTimeout(function(){inp.focus();inp.select();},30);
+        inp.oninput=function(){ if(inp.value.trim()){ err.classList.remove('show'); inp.classList.remove('invalid'); } };
+        function done(v){ hideModal(); resolve(v); }
+        ok.onclick=function(){ var v=inp.value.trim(); if(v) done(v); else nudge(); };
+        m.querySelector('[data-a=cancel]').onclick=function(){ done(null); };
+        inp.onkeydown=function(e){ if(e.key==='Enter'){ var v=inp.value.trim(); if(v) done(v); else nudge(); } if(e.key==='Escape') done(null); };
+      });
+    });
+  }
+  // Returns 'save' | 'discard' | 'cancel'
+  function askLeave(){
+    return new Promise(function(resolve){
+      var named = !!current.name;
+      showModal('<h3>Save changes?</h3><p>'+(named?'Save your changes to \u201c'+esc(current.name)+'\u201d before you go?':'This team is untitled. Name and save it before you go?')+'</p><div class="dj-actions"><button type="button" class="dj-btn" data-a="discard">Don\u2019t save</button><button type="button" class="dj-btn primary" data-a="save">Save</button></div>', function(m){
+        function done(v){ hideModal(); resolve(v); }
+        m.querySelector('[data-a=discard]').onclick=function(){ done('discard'); };
+        m.querySelector('[data-a=save]').onclick=function(){ done('save'); };
+      });
+    });
+  }
+  function confirmDiscard(){
+    if(!dirty) return Promise.resolve(true);
+    return askLeave().then(function(a){
+      if(a==='discard') return true;
+      return saveFlow().then(function(saved){ return saved; });
+    });
+  }
+  function saveFlow(){
+    if(current.id) return doSave(current.name,current.id).then(function(){return true;});
+    return askName({title:'Save this graph',text:'Give this team a name. You can restore it later.',cta:'Save'}).then(function(n){
+      if(!n) return false; return doSave(n,null).then(function(){return true;});
+    });
+  }
+  function doSave(name,id){
+    return A.save(name,id).then(function(rec){ current={id:rec.id,name:rec.name}; markClean(); render(); toast('Saved \u201c'+short(rec.name)+'\u201d'); return rec; });
+  }
+
+  /* ---- Close guard ---- */
+  window.addEventListener('beforeunload', function(e){
+    checkDirty();
+    // Saved or untouched: silence the app's older "progress will be lost" prompt.
+    if(!dirty){ e.stopImmediatePropagation(); return; }
+    e.preventDefault(); e.returnValue='';
+    // If the visitor picks "Stay", timers resume and we offer the save prompt.
+    setTimeout(function(){ if(dirty && !overlay.classList.contains('open')) askLeave().then(function(a){ if(a==='save') saveFlow(); }); }, 400);
+  }, true);
+
+  /* ---- Dirty tracking: compare live state with the last saved state ---- */
+  setInterval(checkDirty, 500);
+
+  /* ---- Mount ---- */
+  function mount(){
+    document.body.appendChild(menu); document.body.appendChild(overlay); document.body.appendChild(toastEl);
+    var pt = document.querySelector('#mainPanel .desktop-only .panel-title');
+    if(pt){
+      var tn=[].slice.call(pt.childNodes).filter(function(n){return n.nodeType===3 && /Your Team/i.test(n.textContent);})[0];
+      var w=makeTrigger(); if(tn) pt.replaceChild(w,tn); else pt.appendChild(w);
+      pt.style.justifyContent='flex-start';
+    }
+    var pl = document.querySelector('#sheetPeek .sheet-peek-label');
+    if(pl){ pl.textContent=''; pl.appendChild(makeTrigger()); }
+    render();
+    baseline = stateKey();
+    window.addEventListener('storage', function(e){ if(e.key===KEY && menu.classList.contains('open')) buildMenu(); });
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+})();
+</script>
+
 
 
 <div id="deleteBin" onclick="confirmDelete()">
