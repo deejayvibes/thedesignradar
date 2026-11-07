@@ -1280,6 +1280,8 @@ const a0_0x53db2e=a0_0x267a;(function(_0x2c371e,_0x572f41){const _0x2add9e=a0_0x
     activeMember = Math.min(Math.max(0, sn.activeMember|0), members.length-1);
     if(!!sn.opaque !== opaqueMode) toggleOpaque();
     renderTabs(); renderPanel(); updateChart(); renderLegend();
+    // Two or more members means the visitor already knows the ropes: skip the onboarding tour.
+    try{ if(members.length>=2) _obDismiss(); }catch(e){}
     return true;
   }
   window.DJVersionsAdapter = {
@@ -1449,12 +1451,8 @@ const a0_0x53db2e=a0_0x267a;(function(_0x2c371e,_0x572f41){const _0x2add9e=a0_0x
 
   /* ---- Close guard ---- */
   window.addEventListener('beforeunload', function(e){
-    checkDirty();
-    // Saved or untouched: silence the app's older "progress will be lost" prompt.
-    if(!dirty){ e.stopImmediatePropagation(); return; }
-    e.preventDefault(); e.returnValue='';
-    // If the visitor picks "Stay", timers resume and we offer the save prompt.
-    setTimeout(function(){ if(dirty && !overlay.classList.contains('open')) askLeave().then(function(a){ if(a==='save') saveFlow(); }); }, 400);
+    // Never show the browser's leave warning, and silence the app's older one.
+    e.stopImmediatePropagation();
   }, true);
 
   /* ---- Dirty tracking: compare live state with the last saved state ---- */
@@ -1473,6 +1471,13 @@ const a0_0x53db2e=a0_0x267a;(function(_0x2c371e,_0x572f41){const _0x2add9e=a0_0x
     if(pl){ pl.textContent=''; pl.appendChild(makeTrigger()); }
     render();
     baseline = stateKey();
+    A.list().then(function(items){
+      if(!items.length) return;
+      return A.load(items[0].id).then(function(rec){
+        if(!rec) return;
+        current = {id:rec.id, name:rec.name}; markClean(); render();
+      });
+    });
     window.addEventListener('storage', function(e){ if(e.key===KEY && menu.classList.contains('open')) buildMenu(); });
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
